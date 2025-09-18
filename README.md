@@ -105,21 +105,30 @@ Connection via environment variables or connection strings in configuration.
 
 ### Core Components
 
-```
-Git Repository                        Cloud Platform (Any Provider)
-├── alerts/                          ┌──────────────────────────┐
-│   ├── revenue.yaml    ─────────────▶│   Serverless Runtime    │
-│   ├── quality.yaml    ─────────────▶│  (SQL Sentinel App)     │
-│   └── inventory.yaml  ─────────────▶│                         │
-└── .github/workflows/               └────────┬─────────────────┘
-                                              │
-                               ┌──────────────┼──────────────┐
-                               ▼              ▼              ▼
-                        ┌──────────────┐ ┌──────────┐ ┌──────────────┐
-                        │Data Warehouse│ │Secret Mgr│ │   Scheduler  │
-                        │(Queries+State│ │(API Keys)│ │ (Cron Jobs)  │
-                        │ +Config)     │ │          │ │              │
-                        └──────────────┘ └──────────┘ └──────────────┘
+```mermaid
+graph TD
+    A1[alerts/revenue.yaml] --> B[Serverless Runtime<br/>SQL Sentinel App]
+    A2[alerts/quality.yaml] --> B
+    A3[alerts/inventory.yaml] --> B
+    A4[.github/workflows/] --> B
+
+    B --> C[Data Warehouse<br/>Queries+State+Config]
+    B --> D[Secret Manager<br/>API Keys]
+    B --> E[Scheduler<br/>Cron Jobs]
+
+    subgraph "Git Repository"
+        A1
+        A2
+        A3
+        A4
+    end
+
+    subgraph "Cloud Platform (Any Provider)"
+        B
+        C
+        D
+        E
+    end
 ```
 
 
