@@ -11,6 +11,7 @@ SQL Sentinel is an open-source, lightweight SQL-first alerting system that enabl
 This is a **greenfield project** - currently only documentation exists. The system will be implemented with the following architecture:
 
 ### Core Components
+
 - **Configuration Layer**: YAML-based alert definitions
 - **Alert Engine**: Scheduler, Executor, and Evaluator components
 - **Database Adapters**: SQLAlchemy-based adapters for multiple database types
@@ -18,6 +19,7 @@ This is a **greenfield project** - currently only documentation exists. The syst
 - **State Management**: Minimal state tracking to prevent duplicate alerts
 
 ### Technology Stack
+
 - **Language**: Python (for SQL ecosystem and analyst familiarity)
 - **Configuration**: YAML files
 - **Database**: SQLAlchemy for multi-database support
@@ -35,19 +37,23 @@ Since this is a new project, there are no existing build commands. The developme
 ## Key Implementation Guidelines
 
 ### Alert Query Contract
+
 All alert queries must return a result set with:
+
 - **Required**: `status` column with values 'ALERT' or 'OK'
 - **Optional**: `actual_value` - the metric value that triggered the alert
 - **Optional**: `threshold` - the threshold that was exceeded
 - **Optional**: Additional columns for context in notifications
 
 ### Supported Data Platforms (Target)
+
 - **Cloud Data Warehouses**: BigQuery, Snowflake, Redshift, Synapse Analytics
 - **Traditional Databases**: PostgreSQL, MySQL/MariaDB, Microsoft SQL Server
 - **Local/Development**: SQLite, DuckDB
 - **Cloud Analytics**: Athena, Azure Data Explorer
 
 ### Configuration Example
+
 ```yaml
 alerts:
   - name: "Low Daily Revenue"
@@ -68,6 +74,7 @@ alerts:
 ## Implementation Phases
 
 ### Phase 1: MVP
+
 - Basic YAML configuration parser
 - PostgreSQL support only
 - Simple cron scheduling
@@ -75,6 +82,7 @@ alerts:
 - Docker container
 
 ### Phase 2: Core Features
+
 - Multiple database support via SQLAlchemy
 - Slack and webhook notifications
 - State tracking (prevent duplicate alerts)
@@ -82,6 +90,7 @@ alerts:
 - Cloud storage support
 
 ### Phase 3: Production Ready
+
 - Web UI for configuration
 - Alert history and analytics
 - Multiple notification channels
@@ -100,6 +109,7 @@ alerts:
 The system should enable a data analyst with only SQL knowledge to successfully deploy and use it within 15 minutes.
 
 **Local Development:**
+
 ```bash
 docker run -d \
   -v $(pwd)/alerts.yaml:/config/alerts.yaml \
@@ -108,10 +118,15 @@ docker run -d \
 ```
 
 **Cloud Deployment (Any Platform):**
+
 ```bash
 # Choose your platform
 ./scripts/deploy-gcp.sh --project=YOUR-PROJECT        # Google Cloud
-./scripts/deploy-aws.sh --cluster=YOUR-CLUSTER       # AWS  
+./scripts/deploy-aws.sh --cluster=YOUR-CLUSTER       # AWS
 ./scripts/deploy-azure.sh --workspace=YOUR-WORKSPACE # Azure
 ./scripts/deploy-snowflake.sh --account=YOUR-ACCOUNT # Snowflake
 ```
+
+## General Notes
+
+1. **Dependencies**: All dependencies should be managed through the devcontainer, not installed with pip or another package manager.
