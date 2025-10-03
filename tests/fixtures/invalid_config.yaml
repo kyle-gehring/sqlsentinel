@@ -1,0 +1,7 @@
+alerts:
+  - name: ""
+    query: "SELECT 1"
+    schedule: "invalid cron"
+    notify:
+      - channel: invalid_channel
+        recipients: []

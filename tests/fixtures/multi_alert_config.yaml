@@ -1,0 +1,33 @@
+alerts:
+  - name: "Revenue Alert"
+    description: "Monitor daily revenue"
+    query: |
+      SELECT
+        CASE WHEN revenue < 10000 THEN 'ALERT' ELSE 'OK' END as status,
+        revenue as actual_value
+      FROM daily_metrics
+    schedule: "0 9 * * *"
+    notify:
+      - channel: email
+        recipients: ["finance@company.com"]
+      - channel: slack
+        webhook_url: "https://hooks.slack.com/services/TEST/WEBHOOK/URL"
+    enabled: true
+
+  - name: "Data Quality Check"
+    description: "Check for null values in critical fields"
+    query: |
+      SELECT
+        CASE WHEN null_count > 0 THEN 'ALERT' ELSE 'OK' END as status,
+        null_count as actual_value,
+        0 as threshold
+      FROM data_quality_metrics
+    schedule: "0 */6 * * *"
+    notify:
+      - channel: webhook
+        url: "https://api.example.com/alerts"
+        method: "POST"
+        headers:
+          Content-Type: "application/json"
+          Authorization: "Bearer token123"
+    enabled: false

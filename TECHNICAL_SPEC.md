@@ -153,65 +153,52 @@ CREATE TABLE sqlsentinel_state (
 
 ```yaml
 # alerts/revenue_monitoring.yaml
+# Database configuration (single connection for all alerts in this file)
+database:
+  url: "${DATABASE_URL}"  # e.g., "postgresql://...", "sqlite:///alerts.db"
+  pool_size: 5
+  timeout: 30
+
 alerts:
   - name: "daily_revenue_drop"
     description: "Alert when daily revenue drops below threshold"
-    
-    # SQL Query Requirements
+    enabled: true
+
+    # SQL Query Requirements (runs against the database configured above)
     query: |
-      SELECT 
+      SELECT
         CASE WHEN daily_revenue < 50000 THEN 'ALERT' ELSE 'OK' END as status,
         daily_revenue as actual_value,
         50000 as threshold,
         order_count,
         DATE(order_date) as date
       FROM (
-        SELECT 
+        SELECT
           SUM(amount) as daily_revenue,
           COUNT(*) as order_count,
           MAX(created_at) as order_date
-        FROM orders 
+        FROM orders
         WHERE DATE(created_at) = CURRENT_DATE - 1
       )
-    
+
     # Scheduling
     schedule: "0 9 * * *"  # Daily at 9 AM UTC
-    timezone: "UTC"
-    
-    # Notification Configuration
-    notifications:
-      - channel: "email"
-        recipients: ["revenue-team@company.com"]
-        subject: "Revenue Alert: {{alert_name}}"
-        template: "revenue_alert.html"
-        
-      - channel: "slack"
-        webhook_secret: "SLACK_REVENUE_WEBHOOK"
-        template: |
-          🚨 Revenue Alert: {{actual_value | currency}} (threshold: {{threshold | currency}})
-          Date: {{date}}
-          Orders: {{order_count}}
-          
-    # Alert Behavior
-    behavior:
-      deduplication_window: "4h"      # Don't re-alert within 4 hours
-      max_consecutive_alerts: 3       # Stop after 3 consecutive alerts
-      auto_resolve: true              # Send OK notification when recovered
-      severity: "high"                # high, medium, low
-      
-    # Metadata
-    metadata:
-      team: "revenue"
-      documentation: "https://wiki.company.com/revenue-monitoring"
-      runbook: "https://runbooks.company.com/revenue-alerts"
-      tags: ["revenue", "daily", "critical"]
 
-# Global configuration
-global:
-  default_timezone: "UTC"
-  default_deduplication_window: "1h"
-  max_query_duration: "300s"
-  notification_rate_limit: "10/hour"
+    # Notification Configuration
+    notify:
+      - channel: email
+        config:
+          recipients: ["revenue-team@company.com"]
+          subject: "Revenue Alert: {alert_name}"
+
+      - channel: slack
+        config:
+          webhook_url: "${SLACK_REVENUE_WEBHOOK}"
+          channel: "#revenue-alerts"
+
+# Note: Advanced features like behavior policies (deduplication_window,
+# max_consecutive_alerts), metadata, timezone support, and global configuration
+# will be added in Phase 2/3. Phase 1 MVP focuses on core alerting functionality.
 ```
 
 ### 4.2 Query Contract

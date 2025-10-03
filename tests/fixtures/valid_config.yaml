@@ -1,0 +1,15 @@
+alerts:
+  - name: "Low Daily Revenue"
+    description: "Alert when yesterday's revenue falls below threshold"
+    query: |
+      SELECT
+        CASE WHEN SUM(revenue) < 10000 THEN 'ALERT' ELSE 'OK' END as status,
+        SUM(revenue) as actual_value,
+        10000 as threshold
+      FROM orders
+      WHERE date = CURRENT_DATE - 1
+    schedule: "0 9 * * *"
+    notify:
+      - channel: email
+        recipients: ["team@company.com"]
+    enabled: true
