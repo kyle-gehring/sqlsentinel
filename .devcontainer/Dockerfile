@@ -41,6 +41,9 @@ RUN install -m 0755 -d /etc/apt/keyrings && \
   apt-get install -y --no-install-recommends docker-ce-cli docker-buildx-plugin && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Create python -> python3 symlink for convenience
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
 # Install Poetry and pytest globally using pip
 RUN pip3 install --no-cache-dir --break-system-packages \
   poetry==1.7.1 \

@@ -8,7 +8,14 @@ This directory contains example configurations and sample data to help you get s
 
 ```bash
 # Create sample data database
-sqlite3 examples/sample_data.db < examples/sample_data.sql
+python -c "
+import sqlite3
+conn = sqlite3.connect('examples/sample_data.db')
+with open('examples/sample_data.sql', 'r') as f:
+    conn.executescript(f.read())
+conn.close()
+print('✓ Sample database created')
+"
 ```
 
 ### 2. Initialize SQL Sentinel state database
