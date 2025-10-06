@@ -103,7 +103,7 @@ export SMTP_PORT=587
 export SMTP_USERNAME=your-email@gmail.com
 export SMTP_PASSWORD=your-app-password
 export SMTP_USE_TLS=true
-export SMTP_FROM_ADDRESS=alerts@example.com
+export SMTP_FROM_ADDRESS=kg@kylegehring.com
 ```
 
 Then run without `--dry-run`:
