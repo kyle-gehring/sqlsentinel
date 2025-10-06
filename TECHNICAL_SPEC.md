@@ -110,40 +110,43 @@ CREATE INDEX idx_configs_updated ON sqlsentinel_configs(updated_at);
 ### 3.2 Execution Tracking
 
 ```sql
--- Alert execution history
+-- Alert execution history (implemented in Sprint 2.1)
 CREATE TABLE sqlsentinel_executions (
-  execution_id VARCHAR(36) PRIMARY KEY,
-  alert_name VARCHAR(255) NOT NULL,
-  execution_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
-  status VARCHAR(20) NOT NULL, -- 'SUCCESS', 'ALERT', 'ERROR'
-  actual_value DECIMAL(20,4),
-  threshold DECIMAL(20,4),
-  query_duration_ms INTEGER,
-  notification_sent BOOLEAN DEFAULT FALSE,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  alert_name TEXT NOT NULL,
+  executed_at TIMESTAMP NOT NULL,
+  execution_duration_ms REAL NOT NULL,
+  status TEXT NOT NULL, -- 'success', 'failure', 'error'
+  actual_value REAL,
+  threshold REAL,
+  query TEXT,
   error_message TEXT,
-  query_result JSON,
-  triggered_by VARCHAR(50) -- 'CRON', 'MANUAL', 'API'
+  triggered_by TEXT NOT NULL, -- 'MANUAL', 'CRON', 'API'
+  notification_sent BOOLEAN DEFAULT 0,
+  notification_error TEXT,
+  context_data TEXT -- JSON string
 );
 
--- Indexes  
-CREATE INDEX idx_executions_alert_time ON sqlsentinel_executions(alert_name, execution_time);
-CREATE INDEX idx_executions_status ON sqlsentinel_executions(status, execution_time);
+-- Indexes
+CREATE INDEX idx_executions_alert ON sqlsentinel_executions(alert_name);
+CREATE INDEX idx_executions_time ON sqlsentinel_executions(executed_at DESC);
+CREATE INDEX idx_executions_status ON sqlsentinel_executions(status);
 ```
 
 ### 3.3 Alert State Management
 
 ```sql
--- Current alert state (for deduplication and rate limiting)
+-- Current alert state (for deduplication and rate limiting, implemented in Sprint 2.1)
 CREATE TABLE sqlsentinel_state (
-  alert_name VARCHAR(255) PRIMARY KEY,
-  last_status VARCHAR(20),
-  last_execution_time TIMESTAMP,
-  last_alert_time TIMESTAMP,
+  alert_name TEXT PRIMARY KEY,
+  current_status TEXT, -- 'ALERT', 'OK', 'ERROR'
+  last_execution_at TIMESTAMP,
+  last_alert_at TIMESTAMP,
   consecutive_alerts INTEGER DEFAULT 0,
   consecutive_successes INTEGER DEFAULT 0,
-  is_silenced BOOLEAN DEFAULT FALSE,
   silence_until TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
+  created_at TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP NOT NULL
 );
 ```
 
@@ -184,17 +187,16 @@ alerts:
     # Scheduling
     schedule: "0 9 * * *"  # Daily at 9 AM UTC
 
-    # Notification Configuration
+    # Notification Configuration (implemented in Sprint 2.1)
     notify:
       - channel: email
-        config:
-          recipients: ["revenue-team@company.com"]
-          subject: "Revenue Alert: {alert_name}"
+        recipients:
+          - "revenue-team@company.com"
+        subject: "Revenue Alert: {alert_name}"
 
       - channel: slack
-        config:
-          webhook_url: "${SLACK_REVENUE_WEBHOOK}"
-          channel: "#revenue-alerts"
+        webhook_url: "${SLACK_REVENUE_WEBHOOK}"
+        channel: "#revenue-alerts"
 
 # Note: Advanced features like behavior policies (deduplication_window,
 # max_consecutive_alerts), metadata, timezone support, and global configuration
@@ -486,28 +488,49 @@ services:
 - Large result set processing
 - Memory and CPU profiling
 
-## 11. Implementation Phases
+## 11. Implementation Status
 
-### Phase 1: Core MVP (Weeks 1-4)
-- [ ] Configuration management system
-- [ ] Basic SQL execution engine  
-- [ ] Email notification support
-- [ ] PostgreSQL/BigQuery support
-- [ ] Docker containerization
+**Current Version:** 0.3.0 (Sprint 2.1)
+**Last Updated:** 2025-01-XX
 
-### Phase 2: Production Features (Weeks 5-8)
-- [ ] Multi-cloud deployment scripts
-- [ ] Comprehensive error handling
-- [ ] Slack/webhook notifications
-- [ ] State management and deduplication
-- [ ] Performance optimization
+### Completed Features ✅
 
-### Phase 3: Advanced Features (Weeks 9-12)
-- [ ] Web UI for monitoring
-- [ ] Advanced notification templates
-- [ ] Query result caching
-- [ ] Multi-tenant support
-- [ ] SaaS preparation
+**Configuration & Validation** (Sprint 1.1-1.2)
+- YAML configuration loader and validator
+- Database connection management (SQLAlchemy)
+- Query executor with contract validation
+- Comprehensive error handling
+
+**Alert Execution Engine** (Sprint 2.1)
+- Full alert execution workflow orchestration
+- State management with deduplication logic
+- Execution history tracking with statistics
+- Email notifications with retry logic
+- CLI tool (init, validate, run, history)
+- Database schema management
+
+### In Progress 🚧
+
+**Automated Scheduling** (Sprint 3.1 - Next)
+- Cron-based scheduler service
+- Automated alert execution
+- Slack/webhook notifications
+
+### Planned Features 📋
+
+**Production Readiness** (Phase 2)
+- Multi-cloud deployment (GCP, AWS, Azure)
+- PostgreSQL/BigQuery explicit support
+- Docker containerization
+- Advanced notification channels
+
+**Advanced Features** (Phase 3)
+- Web UI for monitoring
+- Advanced analytics and reporting
+- Multi-tenant support
+- Enhanced security features
+
+> **Note:** For detailed sprint planning and task breakdowns, see [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md)
 
 ## 12. Success Criteria
 

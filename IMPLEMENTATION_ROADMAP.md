@@ -110,37 +110,85 @@ This roadmap defines the implementation strategy for SQL Sentinel, breaking down
 
 ### Week 2: Alert Execution Engine
 
-#### Sprint 2.1: Query Execution
-**Days 8-10:**
+#### Sprint 2.1: Alert Executor & Manual Execution ✅
+**Days 8-11:** **Status: COMPLETE**
 ```
-├── Database Connection Abstraction
-│   ├── Connection protocol definition
-│   ├── PostgreSQL implementation
-│   ├── Connection pooling
-│   └── Timeout handling
+├── Database Schema Management
+│   ├── Schema initialization for state/history tables
+│   ├── Execution history table (sqlsentinel_executions)
+│   ├── Alert state table (sqlsentinel_state)
+│   └── Configuration audit table (sqlsentinel_configs)
 │
 ├── Alert Executor Implementation
-│   ├── SQL query execution
-│   ├── Result parsing and validation
-│   ├── Error handling and logging
-│   └── Execution state tracking
+│   ├── AlertExecutor orchestrating full workflow
+│   ├── Integration with StateManager for deduplication
+│   ├── Integration with ExecutionHistory for tracking
+│   ├── Integration with NotificationFactory
+│   └── Dry-run mode for testing
 │
-└── State Management
-    ├── Execution history storage
-    ├── Alert state tracking
-    └── Deduplication logic
+├── State Management
+│   ├── AlertState and StateManager classes
+│   ├── Deduplication logic (prevent consecutive alerts)
+│   ├── Alert silencing with timeout
+│   ├── Consecutive alert/OK tracking
+│   └── SQLite datetime handling
+│
+├── Execution History Tracking
+│   ├── ExecutionRecord and ExecutionHistory classes
+│   ├── Full execution metadata capture
+│   ├── Pagination support (limit/offset)
+│   ├── Execution statistics (totals, averages, durations)
+│   └── JSON context data serialization
+│
+├── Email Notification System
+│   ├── EmailNotificationService with SMTP
+│   ├── Retry logic with exponential backoff
+│   ├── Custom email subject templates
+│   ├── Environment variable configuration
+│   └── TLS/authentication support
+│
+├── Notification Factory
+│   ├── NotificationFactory for service creation
+│   ├── Environment-based configuration
+│   ├── Email channel implementation
+│   └── Placeholders for Slack/Webhook (Sprint 2.2)
+│
+└── Command-Line Interface
+    ├── CLI with 4 commands (init, validate, run, history)
+    ├── Manual alert execution (single or all)
+    ├── Dry-run mode support
+    ├── Execution history viewer
+    └── Clear success/failure indicators
 ```
 
 **Deliverables:**
-- [ ] Working query execution engine
-- [ ] Result parsing with contract validation
-- [ ] State management system
-- [ ] Execution history tracking
+- [x] Working alert execution engine with full workflow
+- [x] State management preventing duplicate alerts (87% coverage)
+- [x] Execution history tracking with statistics (87% coverage)
+- [x] Email notification system with retries (98% coverage)
+- [x] CLI for manual alert execution
+- [x] Working examples with sample data
 
 **Success Criteria:**
-- Can execute SQL queries against test database
-- Query results properly parsed into AlertResult
-- Execution state persisted correctly
+- [x] Can execute SQL queries against any SQLAlchemy-supported database
+- [x] Query results properly parsed into QueryResult with validation
+- [x] Execution state persisted correctly with deduplication
+- [x] Email notifications sent successfully with retry logic
+- [x] Complete alert cycle (query → result → state → notification → history) works
+- [x] CLI commands work for validation, execution, and history viewing
+- [x] 92 new tests created, all passing with 90%+ coverage on core modules
+
+**Sprint 2.1 Completion Summary:**
+- ✅ 191 tests passing (92 new) with 90%+ code coverage on core modules
+- ✅ All linting checks passing (Black, Ruff, mypy)
+- ✅ Complete alert execution engine with state/history integration
+- ✅ Email notification system production-ready
+- ✅ CLI tool with 4 commands for manual execution
+- ✅ Working demo with 3 example alerts and sample data
+- ✅ No new dependencies added (built with existing libraries)
+- 📝 See: [Sprint 2.1 Completion Report](docs/sprints/sprint-2.1-completion.md)
+
+**Note:** Automated cron-based scheduling moved to Sprint 3.1 per original roadmap. Sprint 2.1 focused on manual execution via CLI instead.
 
 #### Sprint 2.2: Basic Notifications
 **Days 11-14:**

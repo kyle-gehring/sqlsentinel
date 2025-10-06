@@ -10,163 +10,247 @@ This document defines the internal and external APIs for SQL Sentinel, including
 
 ## 1. Core Data Models
 
-### 1.1 Configuration Models
+### 1.1 Configuration Models (Implemented in Sprint 1.2 & 2.1)
 
 ```python
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any
-from datetime import datetime, timedelta
-from enum import Enum
+from pydantic import BaseModel, Field, field_validator
+from typing import Any, Optional
 
-class AlertSeverity(Enum):
-    LOW = "low"
-    MEDIUM = "medium" 
-    HIGH = "high"
-    CRITICAL = "critical"
+class NotificationConfig(BaseModel):
+    """Notification channel configuration."""
 
-class NotificationChannel(Enum):
-    EMAIL = "email"
-    SLACK = "slack"
-    WEBHOOK = "webhook"
-    TEAMS = "teams"
-    PAGERDUTY = "pagerduty"
+    channel: str = Field(..., description="Notification channel (email, slack, webhook)")
+    recipients: Optional[list[str]] = Field(None, description="Email recipients")
+    webhook_url: Optional[str] = Field(None, description="Webhook URL for slack/webhook channels")
+    subject: Optional[str] = Field(None, description="Email subject template")
 
-@dataclass
-class NotificationConfig:
-    channel: NotificationChannel
-    recipients: Optional[List[str]] = None
-    webhook_secret: Optional[str] = None
-    webhook_url: Optional[str] = None
-    subject_template: Optional[str] = None
-    body_template: Optional[str] = None
-    enabled: bool = True
+    @field_validator("channel")
+    @classmethod
+    def validate_channel(cls, v: str) -> str:
+        """Validate notification channel."""
+        if v not in ["email", "slack", "webhook"]:
+            raise ValueError(f"Unsupported notification channel: {v}")
+        return v
 
-@dataclass  
-class AlertBehavior:
-    deduplication_window: timedelta = timedelta(hours=1)
-    max_consecutive_alerts: int = 5
-    auto_resolve: bool = True
-    silence_on_weekends: bool = False
-    silence_on_holidays: bool = False
-    rate_limit: Optional[str] = None  # "5/hour", "1/day"
+class DatabaseConfig(BaseModel):
+    """Database connection configuration."""
 
-@dataclass
-class AlertMetadata:
-    team: Optional[str] = None
-    documentation_url: Optional[str] = None
-    runbook_url: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
-    created_by: Optional[str] = None
-    
-@dataclass
-class AlertConfig:
-    name: str
-    description: str
-    query: str
-    schedule: str  # Cron expression
-    notifications: List[NotificationConfig]
-    severity: AlertSeverity = AlertSeverity.MEDIUM
-    timezone: str = "UTC"
-    behavior: AlertBehavior = field(default_factory=AlertBehavior)
-    metadata: AlertMetadata = field(default_factory=AlertMetadata)
-    is_active: bool = True
-    version: int = 1
-    
-    def validate(self) -> "ValidationResult":
-        """Validate alert configuration"""
-        pass
+    url: str = Field(..., description="Database connection URL (SQLAlchemy format)")
+    pool_size: int = Field(5, description="Connection pool size")
+    timeout: int = Field(30, description="Connection timeout in seconds")
+
+class AlertConfig(BaseModel):
+    """Alert configuration from YAML (Sprint 1.2)."""
+
+    name: str = Field(..., min_length=1, description="Alert name")
+    description: Optional[str] = Field(None, description="Alert description")
+    query: str = Field(..., min_length=1, description="SQL query to execute")
+    schedule: str = Field(..., description="Cron schedule expression")
+    notify: list[NotificationConfig] = Field(
+        default_factory=list, description="Notification configurations"
+    )
+    enabled: bool = Field(True, description="Whether alert is enabled")
+
+    @field_validator("query")
+    @classmethod
+    def validate_query(cls, v: str) -> str:
+        """Validate SQL query."""
+        if not v.strip():
+            raise ValueError("Query cannot be empty")
+        return v.strip()
+
+    @field_validator("schedule")
+    @classmethod
+    def validate_schedule(cls, v: str) -> str:
+        """Validate cron schedule expression."""
+        from croniter import croniter
+
+        if not croniter.is_valid(v):
+            raise ValueError(f"Invalid cron schedule: {v}")
+        return v
+
+# Note: Advanced features like AlertBehavior, AlertMetadata, and severity levels
+# are planned for future sprints. Sprint 2.1 focuses on core execution.
 ```
 
-### 1.2 Execution Models
+### 1.2 Execution Models (Implemented in Sprint 2.1)
 
 ```python
-class ExecutionStatus(Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    SUCCESS = "success"
-    ALERT = "alert"
-    ERROR = "error"
-    TIMEOUT = "timeout"
-    CANCELLED = "cancelled"
+from pydantic import BaseModel, Field, field_validator
 
-class ErrorType(Enum):
-    CONFIG_ERROR = "config_error"
-    QUERY_ERROR = "query_error" 
-    CONNECTION_ERROR = "connection_error"
-    TIMEOUT_ERROR = "timeout_error"
-    NOTIFICATION_ERROR = "notification_error"
-    PERMISSION_ERROR = "permission_error"
+class QueryResult(BaseModel):
+    """Result from executing an alert query."""
 
-@dataclass
-class QueryResult:
-    status: str  # 'ALERT' or 'OK'
-    actual_value: Optional[float] = None
-    threshold: Optional[float] = None
-    message: Optional[str] = None
-    additional_data: Dict[str, Any] = field(default_factory=dict)
-    
-    def validate_contract(self) -> bool:
-        """Validate query result matches expected contract"""
-        return self.status in ['ALERT', 'OK']
+    status: str = Field(..., description="Alert status: ALERT or OK")
+    actual_value: Any = Field(None, description="The metric value that triggered the alert")
+    threshold: Any = Field(None, description="The threshold that was exceeded")
+    context: dict[str, Any] = Field(default_factory=dict, description="Additional context fields")
 
-@dataclass
-class ErrorDetails:
-    error_type: ErrorType
-    error_code: str
-    message: str
-    details: Dict[str, Any] = field(default_factory=dict)
-    retry_after: Optional[int] = None
-    recoverable: bool = False
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        """Validate status field."""
+        v = v.upper()
+        if v not in ["ALERT", "OK"]:
+            raise ValueError(f"Status must be 'ALERT' or 'OK', got '{v}'")
+        return v
 
-@dataclass
-class ExecutionResult:
-    execution_id: str
-    alert_name: str
-    status: ExecutionStatus
-    start_time: datetime
-    end_time: Optional[datetime] = None
-    duration_ms: Optional[int] = None
-    query_result: Optional[QueryResult] = None
-    error: Optional[ErrorDetails] = None
-    triggered_by: str = "cron"  # 'cron', 'manual', 'api'
-    notifications_sent: List[str] = field(default_factory=list)
-    
-    @property
-    def duration(self) -> Optional[timedelta]:
-        if self.start_time and self.end_time:
-            return self.end_time - self.start_time
-        return None
+class ExecutionResult(BaseModel):
+    """Result from executing an alert."""
+
+    alert_name: str = Field(..., description="Name of the alert that was executed")
+    timestamp: str = Field(..., description="Execution timestamp (ISO format)")
+    status: str = Field(..., description="Execution status: success, failure, error")
+    query_result: Optional[QueryResult] = Field(None, description="Query result if successful")
+    duration_ms: float = Field(..., description="Execution duration in milliseconds")
+    error: Optional[str] = Field(None, description="Error message if execution failed")
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        """Validate execution status."""
+        v = v.lower()
+        if v not in ["success", "failure", "error"]:
+            raise ValueError(f"Status must be 'success', 'failure', or 'error', got '{v}'")
+        return v
+
+# Note: status field mapping:
+# - "success": Query executed successfully and returned status='OK'
+# - "failure": Query executed successfully but returned status='ALERT' (alert condition met)
+# - "error": Query execution failed due to database error, connection issue, etc.
 ```
 
-### 1.3 State Models
+### 1.3 State Models (Implemented in Sprint 2.1)
 
 ```python
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
+
 @dataclass
 class AlertState:
+    """Alert state for deduplication and silencing (Sprint 2.1)."""
+
     alert_name: str
-    last_status: Optional[ExecutionStatus] = None
-    last_execution_time: Optional[datetime] = None
-    last_alert_time: Optional[datetime] = None
+    current_status: Optional[str] = None  # 'ALERT', 'OK', 'ERROR'
+    last_execution_at: Optional[datetime] = None
+    last_alert_at: Optional[datetime] = None
     consecutive_alerts: int = 0
     consecutive_successes: int = 0
-    is_silenced: bool = False
     silence_until: Optional[datetime] = None
-    total_executions: int = 0
-    total_alerts: int = 0
-    updated_at: datetime = field(default_factory=datetime.utcnow)
-    
-    def should_send_notification(self, behavior: AlertBehavior) -> bool:
-        """Determine if notification should be sent based on state and behavior"""
-        pass
-        
-    def is_in_deduplication_window(self, behavior: AlertBehavior) -> bool:
-        """Check if we're within deduplication window"""
-        pass
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    def should_notify(self, new_status: str, min_interval_seconds: int = 0) -> bool:
+        """Determine if notification should be sent based on state.
+
+        Rules:
+        - Only notify if new_status is 'ALERT'
+        - Don't notify if currently silenced
+        - Don't notify if within minimum notification interval
+        - Don't notify if already alerting (deduplicate consecutive alerts)
+        """
+        if self.is_silenced():
+            return False
+
+        if new_status != "ALERT":
+            return False
+
+        # Check minimum interval between alerts
+        if min_interval_seconds > 0 and self.last_alert_at:
+            time_since_last = datetime.utcnow() - self.last_alert_at
+            if time_since_last.total_seconds() < min_interval_seconds:
+                return False
+
+        # Only notify on status transition to ALERT (deduplication)
+        if self.current_status != "ALERT":
+            return True
+
+        return False
+
+    def is_silenced(self) -> bool:
+        """Check if alert is currently silenced."""
+        if self.silence_until is None:
+            return False
+        return datetime.utcnow() < self.silence_until
+
+@dataclass
+class ExecutionRecord:
+    """Record of a single alert execution (Sprint 2.1)."""
+
+    alert_name: str
+    executed_at: datetime
+    execution_duration_ms: float
+    status: str  # 'success', 'failure', 'error'
+    actual_value: Optional[float] = None
+    threshold: Optional[float] = None
+    query: Optional[str] = None
+    error_message: Optional[str] = None
+    triggered_by: str = "MANUAL"  # 'MANUAL', 'CRON', 'API'
+    notification_sent: bool = False
+    notification_error: Optional[str] = None
+    context_data: Optional[dict] = None
 ```
 
-## 2. Core Service APIs
+## 2. Command-Line Interface (Implemented in Sprint 2.1)
 
-### 2.1 Configuration Manager API
+### 2.1 CLI Commands
+
+SQL Sentinel provides a command-line interface for manual alert execution and management:
+
+```bash
+# Initialize state database
+sqlsentinel init --state-db <database_url>
+
+# Validate alert configuration file
+sqlsentinel validate <config_file>
+
+# Run alerts manually
+sqlsentinel run <config_file> [--alert <name>] [--dry-run] [--state-db <url>]
+
+# View execution history
+sqlsentinel history <config_file> [--alert <name>] [--limit <n>] [--state-db <url>]
+```
+
+**Command Details:**
+
+- `init`: Creates the internal SQL Sentinel tables (sqlsentinel_state, sqlsentinel_executions, sqlsentinel_configs)
+- `validate`: Validates YAML configuration file syntax and alert definitions
+- `run`: Executes one or all alerts from config file
+  - `--alert`: Run specific alert by name (default: run all enabled alerts)
+  - `--dry-run`: Test mode - no notifications sent, no state updates
+  - `--state-db`: Override state database URL (default: uses database.url from config)
+- `history`: Shows execution history with statistics
+  - `--alert`: Filter history for specific alert
+  - `--limit`: Limit number of records (default: 10)
+
+**Example Usage:**
+
+```bash
+# Set up state database
+export STATE_DB_URL="sqlite:///sqlsentinel.db"
+sqlsentinel init --state-db $STATE_DB_URL
+
+# Validate configuration
+sqlsentinel validate examples/alerts.yaml
+
+# Test alert in dry-run mode
+sqlsentinel run examples/alerts.yaml --alert daily_revenue_check --dry-run
+
+# Execute all enabled alerts
+export SMTP_HOST="smtp.gmail.com"
+export SMTP_PORT="587"
+export SMTP_USERNAME="alerts@company.com"
+export SMTP_PASSWORD="app-password"
+sqlsentinel run examples/alerts.yaml
+
+# View execution history
+sqlsentinel history examples/alerts.yaml --limit 20
+```
+
+## 3. Core Service APIs
+
+### 3.1 Configuration Manager API (Implemented in Sprint 1.2)
 
 ```python
 from abc import ABC, abstractmethod
@@ -588,7 +672,154 @@ class SyncResult:
         return sum(1 for r in self.results if r.status != 'success')
 ```
 
-## 4. External REST API (Optional)
+## 4. Implemented Service APIs (Sprint 2.1)
+
+### 4.1 Alert Executor
+
+```python
+from sqlalchemy import Engine
+
+class AlertExecutor:
+    """Executes alerts with state management and notifications (Sprint 2.1)."""
+
+    def __init__(
+        self,
+        state_db_engine: Engine,
+        notification_factory: NotificationFactory,
+        min_alert_interval_seconds: int = 0,
+    ):
+        self.state_manager = StateManager(state_db_engine)
+        self.history_manager = ExecutionHistory(state_db_engine)
+        self.notification_factory = notification_factory
+        self.min_alert_interval_seconds = min_alert_interval_seconds
+
+    def execute_alert(
+        self,
+        alert: AlertConfig,
+        db_adapter: DatabaseAdapter,
+        triggered_by: str = "MANUAL",
+        dry_run: bool = False,
+    ) -> ExecutionResult:
+        """Execute alert with full workflow: state → execute → notify → update → record."""
+```
+
+### 4.2 State Manager
+
+```python
+from sqlalchemy import Engine
+
+class StateManager:
+    """Manages alert state in database (Sprint 2.1)."""
+
+    def __init__(self, engine: Engine):
+        self.engine = engine
+
+    def get_state(self, alert_name: str) -> AlertState:
+        """Get current state for alert (creates new if doesn't exist)."""
+
+    def update_state(self, state: AlertState, new_status: str) -> None:
+        """Update state after alert execution."""
+
+    def silence_alert(self, alert_name: str, until: datetime) -> None:
+        """Silence alert until specified time."""
+
+    def unsilence_alert(self, alert_name: str) -> None:
+        """Remove alert silence."""
+```
+
+### 4.3 Execution History
+
+```python
+from sqlalchemy import Engine
+
+class ExecutionHistory:
+    """Tracks alert execution history (Sprint 2.1)."""
+
+    def __init__(self, engine: Engine):
+        self.engine = engine
+
+    def record_execution(self, record: ExecutionRecord) -> int:
+        """Record an execution to history. Returns execution ID."""
+
+    def get_recent_executions(
+        self, alert_name: Optional[str] = None, limit: int = 10
+    ) -> list[ExecutionRecord]:
+        """Get recent executions, optionally filtered by alert."""
+
+    def get_statistics(self, alert_name: Optional[str] = None) -> dict:
+        """Get execution statistics (totals, averages, durations)."""
+```
+
+### 4.4 Notification Services
+
+```python
+class NotificationFactory:
+    """Creates notification services with environment-based config (Sprint 2.1)."""
+
+    def __init__(
+        self,
+        smtp_host: Optional[str] = None,  # Falls back to SMTP_HOST env var
+        smtp_port: Optional[int] = None,  # Falls back to SMTP_PORT env var
+        smtp_username: Optional[str] = None,  # Falls back to SMTP_USERNAME env var
+        smtp_password: Optional[str] = None,  # Falls back to SMTP_PASSWORD env var
+        smtp_use_tls: Optional[bool] = None,  # Falls back to SMTP_USE_TLS env var
+        from_address: Optional[str] = None,  # Falls back to SMTP_FROM_ADDRESS env var
+    ):
+        pass
+
+    def create_service(self, channel: str) -> NotificationService:
+        """Create notification service for channel (email, slack, webhook)."""
+
+class EmailNotificationService(NotificationService):
+    """SMTP email notification service with retry logic (Sprint 2.1)."""
+
+    def __init__(
+        self,
+        smtp_host: str,
+        smtp_port: int = 587,
+        smtp_username: Optional[str] = None,
+        smtp_password: Optional[str] = None,
+        use_tls: bool = True,
+        from_address: Optional[str] = None,
+        max_retries: int = 3,
+        retry_delay_seconds: int = 2,
+    ):
+        pass
+
+    def send(
+        self,
+        alert: AlertConfig,
+        result: QueryResult,
+        notification_config: NotificationConfig,
+    ) -> None:
+        """Send email notification with exponential backoff retry."""
+```
+
+### 4.5 Database Schema Manager
+
+```python
+from sqlalchemy import Engine
+
+class SchemaManager:
+    """Manages SQL Sentinel internal database schema (Sprint 2.1)."""
+
+    def __init__(self, engine: Engine):
+        self.engine = engine
+
+    def create_schema(self) -> None:
+        """Create all SQL Sentinel tables."""
+
+    def drop_schema(self) -> None:
+        """Drop all SQL Sentinel tables."""
+
+    def schema_exists(self) -> bool:
+        """Check if schema exists."""
+
+    def initialize_schema(self) -> None:
+        """Initialize schema if it doesn't exist."""
+```
+
+## 5. External REST API (Planned - Future Sprint)
 
 ```python
 from fastapi import FastAPI, HTTPException, Depends
@@ -644,81 +875,181 @@ async def get_alert_status(alert_name: str):
     pass
 ```
 
-## 5. Error Handling Patterns
+## 6. Error Handling Patterns (Implemented in Sprint 1.2 & 2.1)
 
-### 5.1 Exception Hierarchy
+### 6.1 Exception Hierarchy
 
 ```python
 class SQLSentinelError(Exception):
-    """Base exception for SQL Sentinel"""
+    """Base exception for SQL Sentinel."""
     pass
 
 class ConfigurationError(SQLSentinelError):
-    """Configuration related errors"""
+    """Configuration related errors (YAML parsing, validation)."""
     pass
 
-class QueryExecutionError(SQLSentinelError):
-    """Query execution errors"""
+class ValidationError(SQLSentinelError):
+    """Configuration validation errors."""
+    pass
+
+class ExecutionError(SQLSentinelError):
+    """Query execution and database errors."""
     pass
 
 class NotificationError(SQLSentinelError):
-    """Notification delivery errors"""
-    pass
-
-class ConnectionError(SQLSentinelError):
-    """Database connection errors"""
+    """Notification delivery errors (non-fatal, logged but don't stop execution)."""
     pass
 ```
 
-### 5.2 Retry Logic
+### 6.2 Retry Logic (Implemented in Sprint 2.1)
+
+Email notifications implement retry logic with exponential backoff:
 
 ```python
-from tenacity import retry, stop_after_attempt, wait_exponential
+class EmailNotificationService:
+    def __init__(self, max_retries: int = 3, retry_delay_seconds: int = 2):
+        self.max_retries = max_retries
+        self.retry_delay_seconds = retry_delay_seconds
 
-class RetryableOperation:
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
-    async def execute_with_retry(self, operation):
-        """Execute operation with exponential backoff retry"""
-        return await operation()
+    def send(self, alert, result, notification_config):
+        """Send email with retry logic."""
+        for attempt in range(self.max_retries):
+            try:
+                self._send_email(recipients, subject, body)
+                return
+            except Exception as e:
+                if attempt < self.max_retries - 1:
+                    # Exponential backoff: 2s, 4s, 8s
+                    delay = self.retry_delay_seconds * (2 ** attempt)
+                    time.sleep(delay)
+                else:
+                    raise NotificationError(f"Failed to send email after {self.max_retries} attempts: {e}")
 ```
 
-## 6. Usage Examples
+## 7. Usage Examples (Sprint 2.1 Implementation)
 
-### 6.1 Basic Alert Execution
+### 7.1 Basic Alert Execution
 
 ```python
+from sqlalchemy import create_engine
+from sqlsentinel.config import ConfigLoader, ConfigValidator
+from sqlsentinel.database import DatabaseAdapter
+from sqlsentinel.executor import AlertExecutor
+from sqlsentinel.notifications import NotificationFactory
+
+# Load configuration
+loader = ConfigLoader("alerts.yaml")
+config_data = loader.load()
+validator = ConfigValidator()
+alerts = validator.validate(config_data)
+
+# Set up database connections
+data_db_engine = create_engine(config_data["database"]["url"])
+state_db_engine = create_engine("sqlite:///sqlsentinel.db")
+
 # Initialize services
-config_manager = ConfigManager(storage=DataWarehouseConfigStorage())
-executor = AlertExecutor(connection=BigQueryConnection())
-notification_service = NotificationService()
-state_manager = StateManager(storage=DataWarehouseStateStorage())
+db_adapter = DatabaseAdapter(data_db_engine)
+notification_factory = NotificationFactory(
+    smtp_host="smtp.gmail.com",
+    smtp_port=587,
+    smtp_username="alerts@company.com",
+    smtp_password="app-password"
+)
 
-# Load and execute alerts
-configs = config_manager.load_all_configs()
-for config in configs:
-    # Execute alert
-    result = await executor.execute_alert(config)
-    
-    # Update state
-    state = state_manager.update_state_after_execution(result, config)
-    
-    # Send notifications if needed
-    if result.status == ExecutionStatus.ALERT:
-        await notification_service.send_alert_notification(result, config, state)
+# Create executor with state management
+executor = AlertExecutor(
+    state_db_engine=state_db_engine,
+    notification_factory=notification_factory,
+    min_alert_interval_seconds=3600  # 1 hour minimum between alerts
+)
+
+# Execute alerts
+for alert in alerts:
+    if not alert.enabled:
+        continue
+
+    result = executor.execute_alert(
+        alert=alert,
+        db_adapter=db_adapter,
+        triggered_by="MANUAL",
+        dry_run=False
+    )
+
+    print(f"Alert: {result.alert_name}")
+    print(f"Status: {result.status}")
+    print(f"Duration: {result.duration_ms}ms")
 ```
 
-### 6.2 Configuration Sync
+### 7.2 Using Execution History
 
 ```python
-# Sync configurations from Git
-git_configs = load_configs_from_git_repo()
-sync_result = config_manager.sync_from_git(git_configs)
+from sqlalchemy import create_engine
+from sqlsentinel.executor import ExecutionHistory
 
-print(f"Synced {sync_result.success_count} configs successfully")
-print(f"Failed to sync {sync_result.error_count} configs")
+# Connect to state database
+state_engine = create_engine("sqlite:///sqlsentinel.db")
+history = ExecutionHistory(state_engine)
+
+# Get recent executions
+recent = history.get_recent_executions(alert_name="daily_revenue_check", limit=10)
+for record in recent:
+    print(f"{record.executed_at}: {record.status} - {record.actual_value}")
+
+# Get statistics
+stats = history.get_statistics(alert_name="daily_revenue_check")
+print(f"Total executions: {stats['total_executions']}")
+print(f"Success rate: {stats['success_rate']:.1f}%")
+print(f"Average duration: {stats['avg_duration_ms']:.0f}ms")
 ```
 
-This refined API specification provides a complete, implementable interface for SQL Sentinel with proper error handling, async support, and clear separation of concerns.
+### 7.3 State Management and Silencing
+
+```python
+from datetime import datetime, timedelta
+from sqlalchemy import create_engine
+from sqlsentinel.executor import StateManager
+
+state_engine = create_engine("sqlite:///sqlsentinel.db")
+state_manager = StateManager(state_engine)
+
+# Get current state
+state = state_manager.get_state("daily_revenue_check")
+print(f"Current status: {state.current_status}")
+print(f"Consecutive alerts: {state.consecutive_alerts}")
+
+# Silence an alert for 24 hours
+silence_until = datetime.utcnow() + timedelta(hours=24)
+state_manager.silence_alert("daily_revenue_check", until=silence_until)
+
+# Unsilence
+state_manager.unsilence_alert("daily_revenue_check")
+```
+
+---
+
+## Implementation Status Summary
+
+**Sprint 1.2 (Completed):**
+- ✅ Configuration models (AlertConfig, NotificationConfig, DatabaseConfig)
+- ✅ Query result models (QueryResult with contract validation)
+- ✅ ConfigLoader and ConfigValidator
+- ✅ DatabaseAdapter with SQLAlchemy
+- ✅ QueryExecutor with result parsing
+
+**Sprint 2.1 (Completed):**
+- ✅ Execution models (ExecutionResult, ExecutionRecord)
+- ✅ State models (AlertState with deduplication logic)
+- ✅ AlertExecutor (full workflow orchestration)
+- ✅ StateManager (database-backed state tracking)
+- ✅ ExecutionHistory (tracking with statistics)
+- ✅ EmailNotificationService (SMTP with retry logic)
+- ✅ NotificationFactory (environment-based config)
+- ✅ SchemaManager (internal table management)
+- ✅ CLI tool (init, validate, run, history commands)
+
+**Future Sprints (Planned):**
+- ⏳ Scheduler service (cron-based automation)
+- ⏳ Slack/webhook notifications
+- ⏳ REST API for programmatic access
+- ⏳ GitOps configuration sync
+- ⏳ Multi-cloud deployment scripts
