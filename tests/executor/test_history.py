@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 import pytest
 from sqlalchemy import create_engine
-
 from sqlsentinel.database.schema import SchemaManager
 from sqlsentinel.executor.history import ExecutionHistory, ExecutionRecord
 from sqlsentinel.models.errors import ExecutionError

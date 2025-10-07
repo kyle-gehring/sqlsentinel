@@ -1,11 +1,9 @@
 """Tests for alert executor with state and history integration."""
 
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy import create_engine
-
 from sqlsentinel.database.adapter import DatabaseAdapter
 from sqlsentinel.database.schema import SchemaManager
 from sqlsentinel.executor.alert_executor import AlertExecutor

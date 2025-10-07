@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 import pytest
 from sqlalchemy import create_engine
-
 from sqlsentinel.database.schema import SchemaManager
 from sqlsentinel.executor.state import AlertState, StateManager
 from sqlsentinel.models.errors import ExecutionError
@@ -25,6 +24,9 @@ class TestAlertState:
         assert state.consecutive_oks == 0
         assert state.current_status is None
         assert state.silenced_until is None
+        assert state.escalation_count == 0
+        assert state.notification_failures == 0
+        assert state.last_notification_channel is None
         assert state.updated_at is not None
 
     def test_init_with_values(self):
@@ -280,3 +282,156 @@ class TestStateManager:
         """Test delete_state doesn't error for nonexistent alert."""
         # Should not raise error
         state_manager.delete_state("nonexistent_alert")
+
+    def test_should_escalate_false(self, state_manager):
+        """Test should_escalate returns False below threshold."""
+        state = AlertState(alert_name="test_alert", consecutive_alerts=2)
+        assert state.should_escalate(escalation_threshold=3) is False
+
+    def test_should_escalate_true(self, state_manager):
+        """Test should_escalate returns True at threshold."""
+        state = AlertState(alert_name="test_alert", consecutive_alerts=3)
+        assert state.should_escalate(escalation_threshold=3) is True
+
+    def test_should_escalate_above_threshold(self, state_manager):
+        """Test should_escalate returns True above threshold."""
+        state = AlertState(alert_name="test_alert", consecutive_alerts=5)
+        assert state.should_escalate(escalation_threshold=3) is True
+
+    def test_update_state_with_notification_channel(self, state_manager):
+        """Test update_state records notification channel."""
+        state = AlertState(alert_name="test_alert")
+        state_manager.update_state(state, "ALERT", notification_channel="email")
+
+        retrieved_state = state_manager.get_state("test_alert")
+        assert retrieved_state.last_notification_channel == "email"
+
+    def test_record_notification_failure(self, state_manager):
+        """Test record_notification_failure increments counter."""
+        # Create initial state
+        state = AlertState(alert_name="test_alert")
+        state_manager.update_state(state, "ALERT")
+
+        # Record failure
+        state_manager.record_notification_failure("test_alert")
+
+        # Verify failure count
+        retrieved_state = state_manager.get_state("test_alert")
+        assert retrieved_state.notification_failures == 1
+
+    def test_record_multiple_notification_failures(self, state_manager):
+        """Test record_notification_failure increments multiple times."""
+        state = AlertState(alert_name="test_alert")
+        state_manager.update_state(state, "ALERT")
+
+        # Record 3 failures
+        state_manager.record_notification_failure("test_alert")
+        state_manager.record_notification_failure("test_alert")
+        state_manager.record_notification_failure("test_alert")
+
+        retrieved_state = state_manager.get_state("test_alert")
+        assert retrieved_state.notification_failures == 3
+
+    def test_record_notification_success(self, state_manager):
+        """Test record_notification_success resets failure count."""
+        state = AlertState(alert_name="test_alert")
+        state_manager.update_state(state, "ALERT")
+
+        # Record failures
+        state_manager.record_notification_failure("test_alert")
+        state_manager.record_notification_failure("test_alert")
+
+        # Record success
+        state_manager.record_notification_success("test_alert")
+
+        retrieved_state = state_manager.get_state("test_alert")
+        assert retrieved_state.notification_failures == 0
+
+    def test_record_escalation(self, state_manager):
+        """Test record_escalation increments counter."""
+        state = AlertState(alert_name="test_alert")
+        state_manager.update_state(state, "ALERT")
+
+        # Record escalation
+        state_manager.record_escalation("test_alert")
+
+        retrieved_state = state_manager.get_state("test_alert")
+        assert retrieved_state.escalation_count == 1
+
+    def test_record_multiple_escalations(self, state_manager):
+        """Test record_escalation increments multiple times."""
+        state = AlertState(alert_name="test_alert")
+        state_manager.update_state(state, "ALERT")
+
+        # Record 3 escalations
+        state_manager.record_escalation("test_alert")
+        state_manager.record_escalation("test_alert")
+        state_manager.record_escalation("test_alert")
+
+        retrieved_state = state_manager.get_state("test_alert")
+        assert retrieved_state.escalation_count == 3
+
+    def test_escalation_workflow(self, state_manager):
+        """Test complete escalation workflow."""
+        state = AlertState(alert_name="test_alert")
+
+        # First alert
+        state_manager.update_state(state, "ALERT")
+        state = state_manager.get_state("test_alert")
+        assert state.should_escalate(3) is False
+
+        # Second alert
+        state_manager.update_state(state, "ALERT")
+        state = state_manager.get_state("test_alert")
+        assert state.should_escalate(3) is False
+
+        # Third alert - should trigger escalation
+        state_manager.update_state(state, "ALERT")
+        state = state_manager.get_state("test_alert")
+        assert state.should_escalate(3) is True
+
+        # Record the escalation
+        state_manager.record_escalation("test_alert")
+        state = state_manager.get_state("test_alert")
+        assert state.escalation_count == 1
+
+    def test_notification_channel_tracking(self, state_manager):
+        """Test notification channel is tracked across multiple notifications."""
+        state = AlertState(alert_name="test_alert")
+
+        # First notification via email
+        state_manager.update_state(state, "ALERT", notification_channel="email")
+        state = state_manager.get_state("test_alert")
+        assert state.last_notification_channel == "email"
+
+        # Next notification via slack
+        state_manager.update_state(state, "OK", notification_channel="slack")
+        state = state_manager.get_state("test_alert")
+        assert state.last_notification_channel == "slack"
+
+        # Next alert via webhook
+        state_manager.update_state(state, "ALERT", notification_channel="webhook")
+        state = state_manager.get_state("test_alert")
+        assert state.last_notification_channel == "webhook"
+
+    def test_state_with_all_enhanced_fields(self, state_manager):
+        """Test state persists all enhanced fields correctly."""
+        state = AlertState(alert_name="test_alert")
+
+        # Update with notification channel
+        state_manager.update_state(state, "ALERT", notification_channel="email")
+
+        # Record some failures
+        state_manager.record_notification_failure("test_alert")
+        state_manager.record_notification_failure("test_alert")
+
+        # Record escalation
+        state_manager.record_escalation("test_alert")
+
+        # Retrieve and verify all fields
+        retrieved_state = state_manager.get_state("test_alert")
+        assert retrieved_state.current_status == "ALERT"
+        assert retrieved_state.consecutive_alerts == 1
+        assert retrieved_state.last_notification_channel == "email"
+        assert retrieved_state.notification_failures == 2
+        assert retrieved_state.escalation_count == 1

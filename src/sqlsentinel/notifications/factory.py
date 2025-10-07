@@ -7,6 +7,8 @@ from ..models.errors import NotificationError
 from ..models.notification import NotificationChannel
 from .base import NotificationService
 from .email import EmailNotificationService
+from .slack import SlackNotificationService
+from .webhook import WebhookNotificationService
 
 
 class NotificationFactory:
@@ -20,6 +22,8 @@ class NotificationFactory:
         smtp_password: Optional[str] = None,
         smtp_use_tls: bool = True,
         smtp_from_address: Optional[str] = None,
+        slack_webhook_url: Optional[str] = None,
+        webhook_url: Optional[str] = None,
     ):
         """Initialize notification factory.
 
@@ -30,9 +34,11 @@ class NotificationFactory:
             smtp_password: SMTP password
             smtp_use_tls: Whether to use TLS
             smtp_from_address: From email address
+            slack_webhook_url: Default Slack webhook URL
+            webhook_url: Default webhook URL
 
         Note:
-            All SMTP parameters support environment variable substitution.
+            All parameters support environment variable substitution.
             If a value is None, it will be read from environment variables:
             - smtp_host: SMTP_HOST
             - smtp_port: SMTP_PORT
@@ -40,7 +46,10 @@ class NotificationFactory:
             - smtp_password: SMTP_PASSWORD
             - smtp_use_tls: SMTP_USE_TLS
             - smtp_from_address: SMTP_FROM_ADDRESS
+            - slack_webhook_url: SLACK_WEBHOOK_URL
+            - webhook_url: WEBHOOK_URL
         """
+        # Email configuration
         self.smtp_host = smtp_host or os.getenv("SMTP_HOST")
 
         # Handle smtp_port: use parameter if provided, otherwise check env var, otherwise default to 587
@@ -64,6 +73,12 @@ class NotificationFactory:
 
         self.smtp_from_address = smtp_from_address or os.getenv("SMTP_FROM_ADDRESS")
 
+        # Slack configuration
+        self.slack_webhook_url = slack_webhook_url or os.getenv("SLACK_WEBHOOK_URL")
+
+        # Webhook configuration
+        self.webhook_url = webhook_url or os.getenv("WEBHOOK_URL")
+
     def create_service(self, channel: NotificationChannel) -> NotificationService:
         """Create notification service for the specified channel.
 
@@ -79,13 +94,9 @@ class NotificationFactory:
         if channel == NotificationChannel.EMAIL:
             return self._create_email_service()
         elif channel == NotificationChannel.SLACK:
-            raise NotificationError(
-                "Slack notifications not yet implemented (coming in Sprint 2.2)"
-            )
+            return self._create_slack_service()
         elif channel == NotificationChannel.WEBHOOK:
-            raise NotificationError(
-                "Webhook notifications not yet implemented (coming in Sprint 2.2)"
-            )
+            return self._create_webhook_service()
         else:
             raise NotificationError(f"Unsupported notification channel: {channel}")
 
@@ -111,3 +122,35 @@ class NotificationFactory:
             use_tls=self.smtp_use_tls,
             from_address=self.smtp_from_address,
         )
+
+    def _create_slack_service(self) -> SlackNotificationService:
+        """Create Slack notification service.
+
+        Returns:
+            SlackNotificationService instance
+
+        Raises:
+            NotificationError: If Slack webhook URL is not configured
+        """
+        if not self.slack_webhook_url:
+            raise NotificationError(
+                "Slack webhook URL not configured. Set slack_webhook_url parameter or SLACK_WEBHOOK_URL environment variable."
+            )
+
+        return SlackNotificationService(webhook_url=self.slack_webhook_url)
+
+    def _create_webhook_service(self) -> WebhookNotificationService:
+        """Create generic webhook notification service.
+
+        Returns:
+            WebhookNotificationService instance
+
+        Raises:
+            NotificationError: If webhook URL is not configured
+        """
+        if not self.webhook_url:
+            raise NotificationError(
+                "Webhook URL not configured. Set webhook_url parameter or WEBHOOK_URL environment variable."
+            )
+
+        return WebhookNotificationService(url=self.webhook_url)

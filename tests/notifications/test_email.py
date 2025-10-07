@@ -3,7 +3,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from sqlsentinel.models.alert import AlertConfig, QueryResult
 from sqlsentinel.models.errors import NotificationError
 from sqlsentinel.models.notification import EmailConfig, NotificationChannel, NotificationConfig

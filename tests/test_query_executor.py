@@ -1,7 +1,6 @@
 """Tests for QueryExecutor."""
 
 import pytest
-
 from sqlsentinel.database.adapter import DatabaseAdapter
 from sqlsentinel.executor.query import QueryExecutor
 from sqlsentinel.models.errors import ValidationError

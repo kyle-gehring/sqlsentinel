@@ -2,7 +2,6 @@
 
 import pytest
 from pydantic import ValidationError
-
 from sqlsentinel.models.notification import (
     EmailConfig,
     NotificationChannel,

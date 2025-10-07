@@ -1,7 +1,6 @@
 """Tests for DatabaseAdapter."""
 
 import pytest
-
 from sqlsentinel.database.adapter import DatabaseAdapter
 from sqlsentinel.models.errors import ExecutionError
 

@@ -9,7 +9,6 @@ from sqlalchemy.engine import Engine
 from ..database.adapter import DatabaseAdapter
 from ..models.alert import AlertConfig, ExecutionResult, QueryResult
 from ..models.errors import ExecutionError, NotificationError
-from ..models.notification import NotificationChannel
 from ..notifications.factory import NotificationFactory
 from .history import ExecutionHistory, ExecutionRecord
 from .query import QueryExecutor

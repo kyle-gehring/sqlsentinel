@@ -1,7 +1,6 @@
 """Tests for ConfigValidator."""
 
 import pytest
-
 from sqlsentinel.config.validator import ConfigValidator
 from sqlsentinel.models.alert import AlertConfig
 from sqlsentinel.models.errors import ValidationError

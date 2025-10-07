@@ -4,7 +4,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from sqlsentinel.config.loader import ConfigLoader
 from sqlsentinel.models.errors import ConfigurationError
 

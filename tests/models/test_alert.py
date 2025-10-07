@@ -2,7 +2,6 @@
 
 import pytest
 from pydantic import ValidationError
-
 from sqlsentinel.models.alert import AlertConfig, ExecutionResult, QueryResult
 from sqlsentinel.models.notification import NotificationConfig
 

@@ -1,7 +1,5 @@
 """Database schema management for SQL Sentinel internal tables."""
 
-from datetime import datetime
-from typing import Any
 
 from sqlalchemy import (
     Boolean,
@@ -67,6 +65,9 @@ class SchemaManager:
             Column("consecutive_oks", Integer, nullable=False, default=0),
             Column("current_status", String(50), nullable=True),  # ALERT, OK, ERROR
             Column("silenced_until", DateTime, nullable=True),
+            Column("escalation_count", Integer, nullable=False, default=0),
+            Column("notification_failures", Integer, nullable=False, default=0),
+            Column("last_notification_channel", String(50), nullable=True),
             Column("updated_at", DateTime, nullable=False),
         )
 
@@ -114,9 +115,7 @@ class SchemaManager:
         """
         try:
             # Check if executions table exists
-            return self.engine.dialect.has_table(
-                self.engine.connect(), "sqlsentinel_executions"
-            )
+            return self.engine.dialect.has_table(self.engine.connect(), "sqlsentinel_executions")
         except SQLAlchemyError:
             return False
 

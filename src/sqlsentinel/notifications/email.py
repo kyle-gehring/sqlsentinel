@@ -71,9 +71,7 @@ class EmailNotificationService(NotificationService):
         """
         # Extract email config
         if not isinstance(notification_config.config, EmailConfig):
-            raise NotificationError(
-                f"Expected EmailConfig, got {type(notification_config.config)}"
-            )
+            raise NotificationError(f"Expected EmailConfig, got {type(notification_config.config)}")
 
         email_config = notification_config.config
 

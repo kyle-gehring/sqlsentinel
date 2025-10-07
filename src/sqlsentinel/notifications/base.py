@@ -1,7 +1,6 @@
 """Base notification service interface."""
 
 from abc import ABC, abstractmethod
-from typing import Any
 
 from ..models.alert import AlertConfig, QueryResult
 from ..models.notification import NotificationConfig

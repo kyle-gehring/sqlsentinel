@@ -190,37 +190,72 @@ This roadmap defines the implementation strategy for SQL Sentinel, breaking down
 
 **Note:** Automated cron-based scheduling moved to Sprint 3.1 per original roadmap. Sprint 2.1 focused on manual execution via CLI instead.
 
-#### Sprint 2.2: Basic Notifications
-**Days 11-14:**
+#### Sprint 2.2: Multi-Channel Notifications & Enhanced Features
+**Days 11-14:** **Status: READY TO START**
 ```
-├── Email Notification Provider
-│   ├── SMTP client implementation
-│   ├── Template rendering system
-│   ├── HTML/text email support
-│   └── Error handling and retries
+├── Slack Notification Service
+│   ├── Webhook-based integration
+│   ├── Rich message formatting (Slack blocks)
+│   ├── Retry logic with exponential backoff
+│   └── Environment variable configuration
 │
-├── Notification Service
-│   ├── Provider abstraction
-│   ├── Template context building
-│   ├── Delivery status tracking
-│   └── Rate limiting basics
+├── Webhook Notification Service
+│   ├── Generic webhook support
+│   ├── Flexible payload templates
+│   ├── Custom headers and authentication
+│   ├── Retry logic with exponential backoff
+│   └── Response validation
 │
-└── End-to-End Integration
-    ├── Alert execution → notification flow
-    ├── Integration tests
-    └── Sample alert configurations
+├── Notification Factory Enhancement
+│   ├── Slack service creation
+│   ├── Webhook service creation
+│   ├── Multi-channel routing
+│   └── Environment variable support
+│
+├── Enhanced State Management
+│   ├── Alert silencing with duration
+│   ├── Manual silence/unsilence methods
+│   ├── Escalation counter tracking
+│   └── Notification failure tracking
+│
+├── End-to-End Integration Tests
+│   ├── Complete workflow testing (all channels)
+│   ├── Multi-channel alert testing
+│   ├── State deduplication verification
+│   ├── Error scenario testing
+│   └── Dry-run mode validation
+│
+├── Docker Container
+│   ├── Production-ready Dockerfile
+│   ├── Multi-stage build optimization
+│   ├── Docker Compose setup
+│   └── Environment configuration
+│
+└── CLI & Documentation
+    ├── Silence/unsilence commands
+    ├── Status command
+    ├── Notification channel documentation
+    └── Docker quick start guide
 ```
 
 **Deliverables:**
-- [ ] Email notification system
-- [ ] Template rendering engine
-- [ ] End-to-end alert flow working
-- [ ] Integration test suite
+- [ ] Slack notification service with webhook integration
+- [ ] Generic webhook notification service
+- [ ] Enhanced notification factory supporting all channels
+- [ ] Enhanced state management with silence features
+- [ ] End-to-end integration test suite
+- [ ] Docker container with docker-compose setup
+- [ ] Enhanced CLI with silence/status commands
+- [ ] Complete documentation for all notification channels
 
 **Success Criteria:**
-- Email notifications send successfully
-- Templates render with alert context
-- Complete alert cycle (query → result → notification) works
+- [ ] Slack notifications send successfully via webhook
+- [ ] Webhook notifications support custom payloads
+- [ ] Multi-channel alerts send to all configured channels
+- [ ] Alert silencing works correctly
+- [ ] Docker container builds and runs successfully
+- [ ] Integration tests verify complete workflows
+- [ ] All tests pass with >85% code coverage
 
 ### Week 3: Scheduling & BigQuery Support
 

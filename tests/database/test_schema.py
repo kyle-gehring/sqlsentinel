@@ -2,7 +2,6 @@
 
 import pytest
 from sqlalchemy import create_engine, inspect
-
 from sqlsentinel.database.schema import SchemaManager, create_schema_from_connection_string
 from sqlsentinel.models.errors import ExecutionError
 
@@ -81,6 +80,9 @@ class TestSchemaManager:
             "consecutive_oks",
             "current_status",
             "silenced_until",
+            "escalation_count",
+            "notification_failures",
+            "last_notification_channel",
             "updated_at",
         }
 

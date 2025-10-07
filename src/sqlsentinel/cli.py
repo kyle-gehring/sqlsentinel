@@ -2,8 +2,6 @@
 
 import argparse
 import sys
-from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel
 from sqlalchemy import create_engine
@@ -19,11 +17,13 @@ from .notifications.factory import NotificationFactory
 
 class DatabaseConfig(BaseModel):
     """Database configuration."""
+
     url: str
 
 
 class AppConfig(BaseModel):
     """Application configuration."""
+
     database: DatabaseConfig
     alerts: list[AlertConfig]
 
@@ -123,7 +123,7 @@ def run_alert(
 
         # Display results
         print(f"\n{'='*60}")
-        print(f"Alert Execution Result")
+        print("Alert Execution Result")
         print(f"{'='*60}")
         print(f"Alert Name: {result.alert_name}")
         print(f"Status: {result.status}")
@@ -218,7 +218,7 @@ def run_all_alerts(
 
         # Summary
         print(f"\n{'='*60}")
-        print(f"Execution Summary")
+        print("Execution Summary")
         print(f"{'='*60}")
         total = len(results)
         successful = sum(1 for r in results if r.status == "success")
@@ -231,6 +231,7 @@ def run_all_alerts(
     except Exception as e:
         print(f"✗ Error running alerts: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
@@ -248,7 +249,7 @@ def validate_config(config_file: str) -> int:
         print(f"Validating configuration: {config_file}")
         config = load_config(config_file)
 
-        print(f"✓ Configuration is valid")
+        print("✓ Configuration is valid")
         print(f"  Database: {config.database.url}")
         print(f"  Alerts: {len(config.alerts)}")
 
@@ -306,7 +307,7 @@ def show_history(
             if record.error_message:
                 print(f"  Error: {record.error_message}")
             if record.notification_sent:
-                print(f"  ✓ Notification sent")
+                print("  ✓ Notification sent")
 
         print(f"\n{'='*80}\n")
         return 0

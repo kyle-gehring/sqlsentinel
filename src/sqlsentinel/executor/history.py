@@ -228,9 +228,7 @@ class ExecutionHistory:
                     # Parse datetime if string (SQLite)
                     executed_at = row[2]
                     if isinstance(executed_at, str):
-                        executed_at = datetime.fromisoformat(
-                            executed_at.replace("Z", "+00:00")
-                        )
+                        executed_at = datetime.fromisoformat(executed_at.replace("Z", "+00:00"))
 
                     records.append(
                         ExecutionRecord(
@@ -270,9 +268,7 @@ class ExecutionHistory:
         records = self.get_executions(alert_name=alert_name, limit=1)
         return records[0] if records else None
 
-    def delete_old_executions(
-        self, alert_name: Optional[str] = None, days: int = 30
-    ) -> int:
+    def delete_old_executions(self, alert_name: Optional[str] = None, days: int = 30) -> int:
         """Delete execution records older than specified days.
 
         Args:
