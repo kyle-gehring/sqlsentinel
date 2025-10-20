@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  sqlsentinel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sqlsentinel:latest
+    container_name: sqlsentinel
+    restart: unless-stopped
+
+    # Override default command to run alerts
+    # Example: Run specific alert configuration
+    # command: ["run", "/config/alerts.yaml"]
+
+    # Environment variables
+    environment:
+      # Database connection (example: PostgreSQL)
+      - DATABASE_URL=${DATABASE_URL:-}
+
+      # Email notification settings
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-}
+      - SMTP_USE_TLS=${SMTP_USE_TLS:-true}
+
+      # Slack notification settings
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+
+      # Webhook notification settings
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
+      - WEBHOOK_AUTH_HEADER=${WEBHOOK_AUTH_HEADER:-}
+
+      # State database path
+      - STATE_DB_PATH=/app/state/state.db
+
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+    # Volume mounts
+    volumes:
+      # Mount alert configuration
+      - ./examples/alerts.yaml:/config/alerts.yaml:ro
+
+      # Mount state database (persistent)
+      - sqlsentinel-state:/app/state
+
+      # Mount logs directory (optional)
+      - sqlsentinel-logs:/app/logs
+
+    # Networks
+    networks:
+      - sqlsentinel-network
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Example: PostgreSQL database for alerts to query
+  # Uncomment if you need a local database for testing
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: sqlsentinel-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     - POSTGRES_DB=testdb
+  #     - POSTGRES_USER=testuser
+  #     - POSTGRES_PASSWORD=testpass
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - sqlsentinel-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U testuser"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+volumes:
+  # Persistent state database
+  sqlsentinel-state:
+    driver: local
+
+  # Persistent logs
+  sqlsentinel-logs:
+    driver: local
+
+  # PostgreSQL data (if using local database)
+  # postgres-data:
+  #   driver: local
+
+networks:
+  sqlsentinel-network:
+    driver: bridge

@@ -81,10 +81,13 @@ class TestNotificationFactory:
 
     def test_create_email_service_no_smtp_host(self):
         """Test creating email service without SMTP host fails."""
-        factory = NotificationFactory()
+        # Clear env vars to test missing config
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("SMTP_HOST", None)
+            factory = NotificationFactory()
 
-        with pytest.raises(NotificationError, match="SMTP host not configured"):
-            factory.create_service(NotificationChannel.EMAIL)
+            with pytest.raises(NotificationError, match="SMTP host not configured"):
+                factory.create_service(NotificationChannel.EMAIL)
 
     def test_create_slack_service(self):
         """Test creating Slack notification service."""
@@ -144,8 +147,11 @@ class TestNotificationFactory:
 
     def test_smtp_use_tls_default_true(self):
         """Test SMTP_USE_TLS defaults to true."""
-        factory = NotificationFactory(smtp_host="smtp.example.com")
-        assert factory.smtp_use_tls is True
+        # Clear env vars to test defaults
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("SMTP_USE_TLS", None)
+            factory = NotificationFactory(smtp_host="smtp.example.com")
+            assert factory.smtp_use_tls is True
 
     def test_smtp_use_tls_env_var_false(self):
         """Test SMTP_USE_TLS from environment variable."""
@@ -155,8 +161,11 @@ class TestNotificationFactory:
 
     def test_smtp_port_default(self):
         """Test SMTP port defaults to 587."""
-        factory = NotificationFactory(smtp_host="smtp.example.com")
-        assert factory.smtp_port == 587
+        # Clear env vars to test defaults
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("SMTP_PORT", None)
+            factory = NotificationFactory(smtp_host="smtp.example.com")
+            assert factory.smtp_port == 587
 
     def test_init_with_all_channels(self):
         """Test initialization with all channel configurations."""

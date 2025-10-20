@@ -317,6 +317,193 @@ def show_history(
         return 1
 
 
+def silence_alert(
+    config_file: str,
+    state_db_url: str,
+    alert_name: str,
+    duration_hours: int = 1,
+) -> int:
+    """Silence an alert for a specified duration.
+
+    Args:
+        config_file: Path to YAML configuration file
+        state_db_url: Connection string for state/history database
+        alert_name: Name of alert to silence
+        duration_hours: Hours to silence alert (default: 1)
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
+    try:
+        from datetime import datetime, timedelta
+
+        from .executor.state import StateManager
+
+        # Load config to verify alert exists
+        print(f"Loading configuration from: {config_file}")
+        config = load_config(config_file)
+
+        # Find the alert
+        alert_found = False
+        for alert in config.alerts:
+            if alert.name == alert_name:
+                alert_found = True
+                break
+
+        if not alert_found:
+            print(f"✗ Alert '{alert_name}' not found in configuration")
+            available = [a.name for a in config.alerts]
+            print(f"Available alerts: {', '.join(available)}")
+            return 1
+
+        # Initialize state manager
+        engine = create_engine(state_db_url)
+        state_manager = StateManager(engine)
+
+        # Calculate silence end time
+        silence_until = datetime.utcnow() + timedelta(hours=duration_hours)
+
+        # Silence the alert
+        state_manager.silence_alert(alert_name, silence_until)
+
+        print(f"✓ Alert '{alert_name}' silenced until {silence_until.isoformat()}")
+        print(f"  Duration: {duration_hours} hour(s)")
+        return 0
+
+    except Exception as e:
+        print(f"✗ Error silencing alert: {e}")
+        return 1
+
+
+def unsilence_alert(
+    config_file: str,
+    state_db_url: str,
+    alert_name: str,
+) -> int:
+    """Clear silence on an alert.
+
+    Args:
+        config_file: Path to YAML configuration file
+        state_db_url: Connection string for state/history database
+        alert_name: Name of alert to unsilence
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
+    try:
+        from .executor.state import StateManager
+
+        # Load config to verify alert exists
+        print(f"Loading configuration from: {config_file}")
+        config = load_config(config_file)
+
+        # Find the alert
+        alert_found = False
+        for alert in config.alerts:
+            if alert.name == alert_name:
+                alert_found = True
+                break
+
+        if not alert_found:
+            print(f"✗ Alert '{alert_name}' not found in configuration")
+            available = [a.name for a in config.alerts]
+            print(f"Available alerts: {', '.join(available)}")
+            return 1
+
+        # Initialize state manager
+        engine = create_engine(state_db_url)
+        state_manager = StateManager(engine)
+
+        # Unsilence the alert
+        state_manager.unsilence_alert(alert_name)
+
+        print(f"✓ Alert '{alert_name}' unsilenced successfully")
+        return 0
+
+    except Exception as e:
+        print(f"✗ Error unsilencing alert: {e}")
+        return 1
+
+
+def show_status(
+    config_file: str,
+    state_db_url: str,
+    alert_name: str = None,
+) -> int:
+    """Show current status of alerts.
+
+    Args:
+        config_file: Path to YAML configuration file
+        state_db_url: Connection string for state/history database
+        alert_name: Optional alert name to filter by
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
+    try:
+        from datetime import datetime
+
+        from .executor.state import StateManager
+
+        # Load config
+        print(f"Loading configuration from: {config_file}")
+        config = load_config(config_file)
+
+        # Filter alerts if specific name provided
+        alerts_to_show = config.alerts
+        if alert_name:
+            alerts_to_show = [a for a in config.alerts if a.name == alert_name]
+            if not alerts_to_show:
+                print(f"✗ Alert '{alert_name}' not found in configuration")
+                return 1
+
+        # Initialize state manager
+        engine = create_engine(state_db_url)
+        state_manager = StateManager(engine)
+
+        print(f"\nAlert Status Report")
+        print(f"{'='*80}")
+        print(f"{'Alert Name':<30} {'Status':<15} {'Silenced':<10} {'Last Check':<20}")
+        print(f"{'-'*80}")
+
+        for alert in alerts_to_show:
+            state = state_manager.get_alert_state(alert.name)
+
+            if state:
+                status = state.current_status or "Unknown"
+                last_check = (
+                    state.last_checked.strftime("%Y-%m-%d %H:%M:%S")
+                    if state.last_checked
+                    else "Never"
+                )
+
+                # Check if silenced
+                is_silenced = False
+                silence_info = ""
+                if state.silenced_until:
+                    if state.silenced_until > datetime.utcnow():
+                        is_silenced = True
+                        silence_info = f" (until {state.silenced_until.strftime('%Y-%m-%d %H:%M')})"
+
+                silenced_str = ("Yes" + silence_info) if is_silenced else "No"
+            else:
+                status = "Never Run"
+                last_check = "Never"
+                silenced_str = "No"
+
+            print(f"{alert.name:<30} {status:<15} {silenced_str:<10} {last_check:<20}")
+
+        print(f"{'='*80}\n")
+        return 0
+
+    except Exception as e:
+        print(f"✗ Error showing status: {e}")
+        import traceback
+
+        traceback.print_exc()
+        return 1
+
+
 def main() -> int:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -375,6 +562,45 @@ def main() -> int:
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
 
+    # Silence command
+    silence_parser = subparsers.add_parser("silence", help="Silence an alert")
+    silence_parser.add_argument("config", help="Path to configuration file")
+    silence_parser.add_argument("--alert", required=True, help="Alert name to silence")
+    silence_parser.add_argument(
+        "--duration",
+        type=int,
+        default=1,
+        help="Hours to silence alert (default: 1)",
+    )
+    silence_parser.add_argument(
+        "--state-db",
+        default="sqlite:///sqlsentinel.db",
+        help="State database URL (default: sqlite:///sqlsentinel.db)",
+    )
+
+    # Unsilence command
+    unsilence_parser = subparsers.add_parser("unsilence", help="Unsilence an alert")
+    unsilence_parser.add_argument("config", help="Path to configuration file")
+    unsilence_parser.add_argument("--alert", required=True, help="Alert name to unsilence")
+    unsilence_parser.add_argument(
+        "--state-db",
+        default="sqlite:///sqlsentinel.db",
+        help="State database URL (default: sqlite:///sqlsentinel.db)",
+    )
+
+    # Status command
+    status_parser = subparsers.add_parser("status", help="Show alert status")
+    status_parser.add_argument("config", help="Path to configuration file")
+    status_parser.add_argument(
+        "--alert",
+        help="Filter by alert name",
+    )
+    status_parser.add_argument(
+        "--state-db",
+        default="sqlite:///sqlsentinel.db",
+        help="State database URL (default: sqlite:///sqlsentinel.db)",
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -393,6 +619,12 @@ def main() -> int:
         return validate_config(args.config)
     elif args.command == "history":
         return show_history(args.config, args.state_db, args.alert, args.limit)
+    elif args.command == "silence":
+        return silence_alert(args.config, args.state_db, args.alert, args.duration)
+    elif args.command == "unsilence":
+        return unsilence_alert(args.config, args.state_db, args.alert)
+    elif args.command == "status":
+        return show_status(args.config, args.state_db, args.alert)
 
     return 0
 

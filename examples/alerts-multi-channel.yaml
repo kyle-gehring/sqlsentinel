@@ -1,0 +1,194 @@
+# SQL Sentinel Multi-Channel Notification Examples
+# This example demonstrates email, Slack, and webhook notifications
+# Uses SQLite for the monitored data
+
+database:
+  url: "sqlite:///examples/sample_data.db"
+
+alerts:
+  # Example 1: Email-only notification
+  - name: "daily_revenue_check"
+    description: "Alert when daily revenue falls below $10,000"
+    enabled: true
+    query: |
+      SELECT
+        CASE
+          WHEN total_revenue < 10000 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        total_revenue as actual_value,
+        10000 as threshold,
+        order_count
+      FROM (
+        SELECT
+          SUM(amount) as total_revenue,
+          COUNT(*) as order_count
+        FROM orders
+        WHERE date = date('now', '-1 day')
+      )
+    schedule: "0 9 * * *"  # 9 AM daily
+    notify:
+      - channel: email
+        recipients:
+          - "kg@kylegehring.com"
+        subject: "Revenue Alert: {alert_name}"
+
+  # Example 2: Slack-only notification
+  - name: "high_error_rate"
+    description: "Alert when error rate exceeds 5%"
+    enabled: true
+    query: |
+      SELECT
+        CASE
+          WHEN error_rate > 5 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        error_rate as actual_value,
+        5 as threshold,
+        total_requests,
+        error_count
+      FROM (
+        SELECT
+          (CAST(SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*)) * 100 as error_rate,
+          COUNT(*) as total_requests,
+          SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as error_count
+        FROM api_logs
+        WHERE timestamp >= datetime('now', '-1 hour')
+      )
+    schedule: "*/15 * * * *"  # Every 15 minutes
+    notify:
+      - channel: slack
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+        # Optional: Override channel and username
+        # channel: "#alerts"
+        # username: "SQL Sentinel Bot"
+
+  # Example 3: Webhook-only notification (PagerDuty, Opsgenie, custom services)
+  - name: "database_connection_failure"
+    description: "Alert when database connection fails"
+    enabled: true
+    query: |
+      SELECT
+        CASE
+          WHEN failed_connections > 10 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        failed_connections as actual_value,
+        10 as threshold,
+        last_failure_time
+      FROM connection_health
+      WHERE check_time >= datetime('now', '-5 minutes')
+    schedule: "*/5 * * * *"  # Every 5 minutes
+    notify:
+      - channel: webhook
+        url: "${WEBHOOK_URL}"
+        method: "POST"
+        headers:
+          Authorization: "Bearer ${WEBHOOK_TOKEN}"
+          Content-Type: "application/json"
+
+  # Example 4: Multi-channel notification (Email + Slack)
+  - name: "critical_data_quality"
+    description: "Alert via multiple channels for critical data quality issues"
+    enabled: true
+    query: |
+      SELECT
+        CASE
+          WHEN null_percentage > 10 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        null_percentage as actual_value,
+        10 as threshold,
+        total_rows,
+        null_rows
+      FROM (
+        SELECT
+          (CAST(SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*)) * 100 as null_percentage,
+          COUNT(*) as total_rows,
+          SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) as null_rows
+        FROM important_table
+      )
+    schedule: "0 */2 * * *"  # Every 2 hours
+    notify:
+      # Send to email
+      - channel: email
+        recipients:
+          - "kg@kylegehring.com"
+          - "team@company.com"
+        subject: "CRITICAL: Data Quality Alert - {alert_name}"
+
+      # AND send to Slack
+      - channel: slack
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+        channel: "#data-quality-alerts"
+        username: "SQL Sentinel - Data Quality"
+
+  # Example 5: Multi-channel with webhook (Email + Slack + Webhook)
+  - name: "payment_processing_failure"
+    description: "Alert via all channels for payment processing failures"
+    enabled: true
+    query: |
+      SELECT
+        CASE
+          WHEN failed_payments > 5 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        failed_payments as actual_value,
+        5 as threshold,
+        total_payments,
+        failure_rate
+      FROM (
+        SELECT
+          SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_payments,
+          COUNT(*) as total_payments,
+          (CAST(SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*)) * 100 as failure_rate
+        FROM payments
+        WHERE created_at >= datetime('now', '-15 minutes')
+      )
+    schedule: "*/15 * * * *"  # Every 15 minutes
+    notify:
+      # Email notification
+      - channel: email
+        recipients:
+          - "kg@kylegehring.com"
+          - "payments-team@company.com"
+        subject: "URGENT: Payment Processing Alert - {alert_name}"
+
+      # Slack notification
+      - channel: slack
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+        channel: "#payments-critical"
+
+      # Webhook notification (e.g., PagerDuty for on-call escalation)
+      - channel: webhook
+        url: "${PAGERDUTY_WEBHOOK}"
+        method: "POST"
+        headers:
+          Authorization: "Token token=${PAGERDUTY_TOKEN}"
+          Content-Type: "application/json"
+          From: "kg@kylegehring.com"
+
+  # Example 6: Data freshness check with Slack
+  - name: "data_freshness_check"
+    description: "Alert when data hasn't been updated in 24 hours"
+    enabled: true
+    query: |
+      SELECT
+        CASE
+          WHEN hours_since_update > 24 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        hours_since_update as actual_value,
+        24 as threshold,
+        last_update
+      FROM (
+        SELECT
+          (julianday('now') - julianday(MAX(updated_at))) * 24 as hours_since_update,
+          MAX(updated_at) as last_update
+        FROM data_pipeline
+      )
+    schedule: "0 */6 * * *"  # Every 6 hours
+    notify:
+      - channel: slack
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+        channel: "#data-pipeline-alerts"

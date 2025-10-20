@@ -78,7 +78,8 @@ for domain in \
     "download.docker.com" \
     "registry-1.docker.io" \
     "auth.docker.io" \
-    "production.cloudflare.docker.com"; do
+    "production.cloudflare.docker.com" \
+    "mail.kylegehring.com"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
