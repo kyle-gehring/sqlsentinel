@@ -17,6 +17,9 @@ from sqlsentinel.cli import (
     run_alert,
     run_all_alerts,
     show_history,
+    silence_alert,
+    show_status,
+    unsilence_alert,
     validate_config,
 )
 from sqlsentinel.models.alert import AlertConfig, QueryResult
@@ -909,3 +912,446 @@ class TestMain:
         mock_history.assert_called_once_with(
             "test.yaml", "sqlite:///sqlsentinel.db", "my_alert", 20
         )
+
+    @patch("sys.argv", ["sqlsentinel", "silence", "test.yaml", "--alert", "my_alert"])
+    @patch("sqlsentinel.cli.silence_alert")
+    def test_main_silence_command(self, mock_silence):
+        """Test main with silence command."""
+        mock_silence.return_value = 0
+        exit_code = main()
+        assert exit_code == 0
+        mock_silence.assert_called_once_with(
+            "test.yaml", "sqlite:///sqlsentinel.db", "my_alert", 1
+        )
+
+    @patch(
+        "sys.argv",
+        ["sqlsentinel", "silence", "test.yaml", "--alert", "my_alert", "--duration", "4"],
+    )
+    @patch("sqlsentinel.cli.silence_alert")
+    def test_main_silence_command_custom_duration(self, mock_silence):
+        """Test main with silence command and custom duration."""
+        mock_silence.return_value = 0
+        exit_code = main()
+        assert exit_code == 0
+        mock_silence.assert_called_once_with(
+            "test.yaml", "sqlite:///sqlsentinel.db", "my_alert", 4
+        )
+
+    @patch("sys.argv", ["sqlsentinel", "unsilence", "test.yaml", "--alert", "my_alert"])
+    @patch("sqlsentinel.cli.unsilence_alert")
+    def test_main_unsilence_command(self, mock_unsilence):
+        """Test main with unsilence command."""
+        mock_unsilence.return_value = 0
+        exit_code = main()
+        assert exit_code == 0
+        mock_unsilence.assert_called_once_with(
+            "test.yaml", "sqlite:///sqlsentinel.db", "my_alert"
+        )
+
+    @patch("sys.argv", ["sqlsentinel", "status", "test.yaml"])
+    @patch("sqlsentinel.cli.show_status")
+    def test_main_status_command(self, mock_status):
+        """Test main with status command."""
+        mock_status.return_value = 0
+        exit_code = main()
+        assert exit_code == 0
+        mock_status.assert_called_once_with(
+            "test.yaml", "sqlite:///sqlsentinel.db", None
+        )
+
+    @patch("sys.argv", ["sqlsentinel", "status", "test.yaml", "--alert", "my_alert"])
+    @patch("sqlsentinel.cli.show_status")
+    def test_main_status_filtered(self, mock_status):
+        """Test main with filtered status command."""
+        mock_status.return_value = 0
+        exit_code = main()
+        assert exit_code == 0
+        mock_status.assert_called_once_with(
+            "test.yaml", "sqlite:///sqlsentinel.db", "my_alert"
+        )
+
+
+class TestSilenceAlert:
+    """Tests for silence_alert function."""
+
+    @patch("sqlsentinel.cli.load_config")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.executor.state.StateManager")
+    def test_silence_alert_success(
+        self, mock_state_class, mock_create_engine, mock_load_config, capsys
+    ):
+        """Test successful alert silencing."""
+        # Mock config
+        alert = AlertConfig(
+            name="test_alert",
+            description="Test alert",
+            query="SELECT 'OK' as status",
+            schedule="* * * * *",
+            notify=[
+                NotificationConfig(
+                    channel="email",
+                    config=EmailConfig(recipients=["kg@kylegehring.com"]),
+                )
+            ],
+        )
+        config = AppConfig(
+            database=DatabaseConfig(url="sqlite:///test.db"),
+            alerts=[alert],
+        )
+        mock_load_config.return_value = config
+
+        mock_engine = Mock()
+        mock_create_engine.return_value = mock_engine
+
+        mock_state_manager = Mock()
+        mock_state_class.return_value = mock_state_manager
+
+        exit_code = silence_alert("test.yaml", "sqlite:///state.db", "test_alert", 2)
+
+        assert exit_code == 0
+        mock_state_manager.silence_alert.assert_called_once_with("test_alert", 7200)
+        captured = capsys.readouterr()
+        assert "silenced until" in captured.out
+        assert "Duration: 2 hour(s)" in captured.out
+
+    @patch("sqlsentinel.cli.load_config")
+    def test_silence_alert_not_found(self, mock_load_config, capsys):
+        """Test silencing alert that doesn't exist."""
+        alert = AlertConfig(
+            name="other_alert",
+            description="Other alert",
+            query="SELECT 'OK' as status",
+            schedule="* * * * *",
+            notify=[
+                NotificationConfig(
+                    channel="email",
+                    config=EmailConfig(recipients=["kg@kylegehring.com"]),
+                )
+            ],
+        )
+        config = AppConfig(
+            database=DatabaseConfig(url="sqlite:///test.db"),
+            alerts=[alert],
+        )
+        mock_load_config.return_value = config
+
+        exit_code = silence_alert("test.yaml", "sqlite:///state.db", "test_alert", 1)
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert "Alert 'test_alert' not found" in captured.out
+        assert "Available alerts: other_alert" in captured.out
+
+    @patch("sqlsentinel.cli.load_config")
+    def test_silence_alert_exception(self, mock_load_config, capsys):
+        """Test silence alert with exception."""
+        mock_load_config.side_effect = Exception("Config error")
+
+        exit_code = silence_alert("test.yaml", "sqlite:///state.db", "test_alert", 1)
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert "Error silencing alert" in captured.out
+
+
+class TestUnsilenceAlert:
+    """Tests for unsilence_alert function."""
+
+    @patch("sqlsentinel.cli.load_config")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.executor.state.StateManager")
+    def test_unsilence_alert_success(
+        self, mock_state_class, mock_create_engine, mock_load_config, capsys
+    ):
+        """Test successful alert unsilencing."""
+        # Mock config
+        alert = AlertConfig(
+            name="test_alert",
+            description="Test alert",
+            query="SELECT 'OK' as status",
+            schedule="* * * * *",
+            notify=[
+                NotificationConfig(
+                    channel="email",
+                    config=EmailConfig(recipients=["kg@kylegehring.com"]),
+                )
+            ],
+        )
+        config = AppConfig(
+            database=DatabaseConfig(url="sqlite:///test.db"),
+            alerts=[alert],
+        )
+        mock_load_config.return_value = config
+
+        mock_engine = Mock()
+        mock_create_engine.return_value = mock_engine
+
+        mock_state_manager = Mock()
+        mock_state_class.return_value = mock_state_manager
+
+        exit_code = unsilence_alert("test.yaml", "sqlite:///state.db", "test_alert")
+
+        assert exit_code == 0
+        mock_state_manager.unsilence_alert.assert_called_once_with("test_alert")
+        captured = capsys.readouterr()
+        assert "unsilenced successfully" in captured.out
+
+    @patch("sqlsentinel.cli.load_config")
+    def test_unsilence_alert_not_found(self, mock_load_config, capsys):
+        """Test unsilencing alert that doesn't exist."""
+        alert = AlertConfig(
+            name="other_alert",
+            description="Other alert",
+            query="SELECT 'OK' as status",
+            schedule="* * * * *",
+            notify=[
+                NotificationConfig(
+                    channel="email",
+                    config=EmailConfig(recipients=["kg@kylegehring.com"]),
+                )
+            ],
+        )
+        config = AppConfig(
+            database=DatabaseConfig(url="sqlite:///test.db"),
+            alerts=[alert],
+        )
+        mock_load_config.return_value = config
+
+        exit_code = unsilence_alert("test.yaml", "sqlite:///state.db", "test_alert")
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert "Alert 'test_alert' not found" in captured.out
+
+    @patch("sqlsentinel.cli.load_config")
+    def test_unsilence_alert_exception(self, mock_load_config, capsys):
+        """Test unsilence alert with exception."""
+        mock_load_config.side_effect = Exception("Config error")
+
+        exit_code = unsilence_alert("test.yaml", "sqlite:///state.db", "test_alert")
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert "Error unsilencing alert" in captured.out
+
+
+class TestShowStatus:
+    """Tests for show_status function."""
+
+    @patch("sqlsentinel.cli.load_config")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.executor.state.StateManager")
+    def test_show_status_success(
+        self, mock_state_class, mock_create_engine, mock_load_config, capsys
+    ):
+        """Test successful status display."""
+        from datetime import datetime
+
+        # Mock config
+        alerts = [
+            AlertConfig(
+                name="alert1",
+                description="First alert",
+                query="SELECT 'OK' as status",
+                schedule="* * * * *",
+                notify=[
+                    NotificationConfig(
+                        channel="email",
+                        config=EmailConfig(recipients=["kg@kylegehring.com"]),
+                    )
+                ],
+            ),
+            AlertConfig(
+                name="alert2",
+                description="Second alert",
+                query="SELECT 'OK' as status",
+                schedule="* * * * *",
+                notify=[
+                    NotificationConfig(
+                        channel="email",
+                        config=EmailConfig(recipients=["kg@kylegehring.com"]),
+                    )
+                ],
+            ),
+        ]
+        config = AppConfig(
+            database=DatabaseConfig(url="sqlite:///test.db"),
+            alerts=alerts,
+        )
+        mock_load_config.return_value = config
+
+        mock_engine = Mock()
+        mock_create_engine.return_value = mock_engine
+
+        mock_state_manager = Mock()
+
+        # Mock state for alert1 with execution history
+        mock_state1 = Mock()
+        mock_state1.current_status = "OK"
+        mock_state1.last_executed_at = datetime(2024, 1, 1, 12, 0, 0)
+        mock_state1.silenced_until = None
+
+        # Mock state for alert2 with no execution history
+        mock_state2 = Mock()
+        mock_state2.current_status = None
+        mock_state2.last_executed_at = None
+        mock_state2.silenced_until = None
+
+        def get_state_side_effect(alert_name):
+            if alert_name == "alert1":
+                return mock_state1
+            return mock_state2
+
+        mock_state_manager.get_state.side_effect = get_state_side_effect
+        mock_state_class.return_value = mock_state_manager
+
+        exit_code = show_status("test.yaml", "sqlite:///state.db")
+
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert "Alert Status Report" in captured.out
+        assert "alert1" in captured.out
+        assert "alert2" in captured.out
+        assert "OK" in captured.out
+
+    @patch("sqlsentinel.cli.load_config")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.executor.state.StateManager")
+    def test_show_status_with_silenced(
+        self, mock_state_class, mock_create_engine, mock_load_config, capsys
+    ):
+        """Test status display with silenced alert."""
+        from datetime import datetime, timedelta
+
+        alert = AlertConfig(
+            name="test_alert",
+            description="Test alert",
+            query="SELECT 'OK' as status",
+            schedule="* * * * *",
+            notify=[
+                NotificationConfig(
+                    channel="email",
+                    config=EmailConfig(recipients=["kg@kylegehring.com"]),
+                )
+            ],
+        )
+        config = AppConfig(
+            database=DatabaseConfig(url="sqlite:///test.db"),
+            alerts=[alert],
+        )
+        mock_load_config.return_value = config
+
+        mock_engine = Mock()
+        mock_create_engine.return_value = mock_engine
+
+        mock_state_manager = Mock()
+        mock_state = Mock()
+        mock_state.current_status = "ALERT"
+        mock_state.last_executed_at = datetime(2024, 1, 1, 12, 0, 0)
+        mock_state.silenced_until = datetime.utcnow() + timedelta(hours=2)
+        mock_state_manager.get_state.return_value = mock_state
+        mock_state_class.return_value = mock_state_manager
+
+        exit_code = show_status("test.yaml", "sqlite:///state.db")
+
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert "Alert Status Report" in captured.out
+        assert "Yes (until" in captured.out
+
+    @patch("sqlsentinel.cli.load_config")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.executor.state.StateManager")
+    def test_show_status_filtered(
+        self, mock_state_class, mock_create_engine, mock_load_config
+    ):
+        """Test status display filtered by alert name."""
+        from datetime import datetime
+
+        alerts = [
+            AlertConfig(
+                name="alert1",
+                description="First alert",
+                query="SELECT 'OK' as status",
+                schedule="* * * * *",
+                notify=[
+                    NotificationConfig(
+                        channel="email",
+                        config=EmailConfig(recipients=["kg@kylegehring.com"]),
+                    )
+                ],
+            ),
+            AlertConfig(
+                name="alert2",
+                description="Second alert",
+                query="SELECT 'OK' as status",
+                schedule="* * * * *",
+                notify=[
+                    NotificationConfig(
+                        channel="email",
+                        config=EmailConfig(recipients=["kg@kylegehring.com"]),
+                    )
+                ],
+            ),
+        ]
+        config = AppConfig(
+            database=DatabaseConfig(url="sqlite:///test.db"),
+            alerts=alerts,
+        )
+        mock_load_config.return_value = config
+
+        mock_engine = Mock()
+        mock_create_engine.return_value = mock_engine
+
+        mock_state_manager = Mock()
+        mock_state = Mock()
+        mock_state.current_status = "OK"
+        mock_state.last_executed_at = datetime(2024, 1, 1, 12, 0, 0)
+        mock_state.silenced_until = None
+        mock_state_manager.get_state.return_value = mock_state
+        mock_state_class.return_value = mock_state_manager
+
+        exit_code = show_status("test.yaml", "sqlite:///state.db", alert_name="alert1")
+
+        assert exit_code == 0
+        # Should only call get_state once for alert1
+        assert mock_state_manager.get_state.call_count == 1
+
+    @patch("sqlsentinel.cli.load_config")
+    def test_show_status_alert_not_found(self, mock_load_config, capsys):
+        """Test status display for non-existent alert."""
+        alert = AlertConfig(
+            name="other_alert",
+            description="Other alert",
+            query="SELECT 'OK' as status",
+            schedule="* * * * *",
+            notify=[
+                NotificationConfig(
+                    channel="email",
+                    config=EmailConfig(recipients=["kg@kylegehring.com"]),
+                )
+            ],
+        )
+        config = AppConfig(
+            database=DatabaseConfig(url="sqlite:///test.db"),
+            alerts=[alert],
+        )
+        mock_load_config.return_value = config
+
+        exit_code = show_status("test.yaml", "sqlite:///state.db", alert_name="test_alert")
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert "Alert 'test_alert' not found" in captured.out
+
+    @patch("sqlsentinel.cli.load_config")
+    def test_show_status_exception(self, mock_load_config, capsys):
+        """Test status display with exception."""
+        mock_load_config.side_effect = Exception("Config error")
+
+        exit_code = show_status("test.yaml", "sqlite:///state.db")
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert "Error showing status" in captured.out
