@@ -50,7 +50,7 @@ notify:
     url: "https://api.example.com/alerts"
 
     # Optional - defaults to POST
-    method: "POST"  # GET, POST, PUT, or PATCH
+    method: "POST" # GET, POST, PUT, or PATCH
 
     # Optional - custom headers
     headers:
@@ -80,15 +80,15 @@ SQL Sentinel sends the following JSON payload to your webhook:
 
 ### Payload Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `alert_name` | string | Name of the alert |
-| `description` | string | Alert description (if provided) |
-| `status` | string | Current status: "ALERT" or "OK" |
+| Field          | Type          | Description                                          |
+| -------------- | ------------- | ---------------------------------------------------- |
+| `alert_name`   | string        | Name of the alert                                    |
+| `description`  | string        | Alert description (if provided)                      |
+| `status`       | string        | Current status: "ALERT" or "OK"                      |
 | `actual_value` | number/string | The metric value that triggered the alert (optional) |
-| `threshold` | number/string | The threshold that was exceeded (optional) |
-| `timestamp` | string | ISO 8601 timestamp when alert was triggered |
-| `context` | object | Additional fields from your SQL query (optional) |
+| `threshold`    | number/string | The threshold that was exceeded (optional)           |
+| `timestamp`    | string        | ISO 8601 timestamp when alert was triggered          |
+| `context`      | object        | Additional fields from your SQL query (optional)     |
 
 ## Popular Service Integrations
 
@@ -102,7 +102,7 @@ notify:
     headers:
       Authorization: "Token token=${PAGERDUTY_TOKEN}"
       Content-Type: "application/json"
-      From: "kg@kylegehring.com"
+      From: "sqlsentinel@kylegehring.com"
 ```
 
 **Note**: For full PagerDuty integration, you may need to transform the payload. Consider using a middleware service or PagerDuty's native webhook receiver.
@@ -178,6 +178,7 @@ headers:
 ```
 
 Generate base64 credentials:
+
 ```bash
 echo -n "username:password" | base64
 ```
@@ -193,6 +194,7 @@ url: "https://api.example.com/alerts?token=${API_TOKEN}"
 ### Retry Logic
 
 SQL Sentinel automatically retries failed webhook requests:
+
 - **Default Attempts**: 3
 - **Backoff**: Exponential (1s, 2s, 4s)
 - **Timeout**: 10 seconds per request
@@ -200,12 +202,14 @@ SQL Sentinel automatically retries failed webhook requests:
 ### Success Criteria
 
 A webhook call is considered successful if:
+
 - HTTP status code is 2xx (200-299)
 - Response received within timeout
 
 ### Failure Handling
 
 If a webhook fails after all retries:
+
 1. Error is logged with details (status code, response body)
 2. Failure is recorded in state database
 3. Alert execution continues (doesn't block other notifications)
@@ -250,6 +254,7 @@ sqlsentinel run alerts.yaml --alert my_alert
 **Symptoms**: "Request timeout" errors
 
 **Solutions**:
+
 - Verify the webhook URL is accessible from your network
 - Check firewall rules
 - Ensure the service is running
@@ -260,6 +265,7 @@ sqlsentinel run alerts.yaml --alert my_alert
 **Symptoms**: HTTP 401 or 403 errors
 
 **Solutions**:
+
 - Verify API token/key is correct
 - Check token hasn't expired
 - Ensure correct header format (Bearer, Basic, etc.)
@@ -276,6 +282,7 @@ curl -v -X POST "https://api.example.com/alerts" \
 **Symptoms**: HTTP 400 errors
 
 **Solutions**:
+
 - Check the service's expected payload format
 - Verify Content-Type header is correct
 - Review service API documentation
@@ -286,6 +293,7 @@ curl -v -X POST "https://api.example.com/alerts" \
 **Symptoms**: "SSL certificate verification failed"
 
 **Solutions**:
+
 - Ensure target service has valid SSL certificate
 - Update CA certificates on your system
 - For development/testing only: Note that SQL Sentinel validates SSL by default for security
@@ -295,6 +303,7 @@ curl -v -X POST "https://api.example.com/alerts" \
 **Symptoms**: Literal `${VARIABLE}` in requests
 
 **Solutions**:
+
 ```bash
 # Verify variable is set
 echo $WEBHOOK_URL
@@ -309,12 +318,15 @@ echo 'WEBHOOK_URL=https://api.example.com/alerts' >> .env
 ### Debug Tips
 
 1. **Use webhook.site for testing**
+
    ```yaml
    url: "https://webhook.site/your-unique-url"
    ```
+
    Visit webhook.site to see the exact payload being sent
 
 2. **Enable verbose logging**
+
    ```bash
    LOG_LEVEL=DEBUG sqlsentinel run alerts.yaml
    ```
@@ -340,6 +352,7 @@ url: "https://api.example.com/alerts?token=${API_TOKEN}"
 ### 2. Implement Webhook Verification
 
 On your webhook receiver:
+
 - Validate the source of requests
 - Use HTTPS endpoints
 - Implement authentication
@@ -351,13 +364,13 @@ Your webhook receiver should handle both states:
 
 ```javascript
 // Example webhook receiver
-app.post('/alerts', (req, res) => {
+app.post("/alerts", (req, res) => {
   const { alert_name, status, actual_value, threshold } = req.body;
 
-  if (status === 'ALERT') {
+  if (status === "ALERT") {
     // Create incident
     createIncident(alert_name, actual_value, threshold);
-  } else if (status === 'OK') {
+  } else if (status === "OK") {
     // Resolve incident
     resolveIncident(alert_name);
   }
@@ -388,19 +401,23 @@ method: "PATCH"
 ## Security Considerations
 
 1. **Use HTTPS**
+
    - Always use HTTPS endpoints
    - Avoid HTTP for production workloads
 
 2. **Secure Credentials**
+
    - Never commit API keys/tokens to version control
    - Use environment variables or secrets management
    - Rotate credentials regularly
 
 3. **Validate SSL Certificates**
+
    - SQL Sentinel validates SSL certificates by default
    - Don't disable verification in production
 
 4. **Rate Limiting**
+
    - Be aware of your webhook service's rate limits
    - Implement appropriate alert thresholds to avoid spam
 

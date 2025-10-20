@@ -5,6 +5,7 @@ SQL Sentinel allows you to send alerts to multiple notification channels simulta
 ## Overview
 
 Send a single alert to any combination of:
+
 - **Email** - for record-keeping and detailed information
 - **Slack** - for real-time team visibility
 - **Webhook** - for integration with incident management systems
@@ -22,7 +23,7 @@ alerts:
     notify:
       # Send to email
       - channel: email
-        recipients: ["kg@kylegehring.com"]
+        recipients: ["sqlsentinel@kylegehring.com"]
         subject: "CRITICAL: System Failure"
 
       # AND send to Slack
@@ -53,6 +54,7 @@ notify:
 ```
 
 **Benefits:**
+
 - Email provides searchable history
 - Slack ensures immediate visibility
 - Team can discuss in Slack thread
@@ -74,6 +76,7 @@ notify:
 ```
 
 **Benefits:**
+
 - Slack for team awareness
 - Webhook creates incident in PagerDuty/Opsgenie
 - On-call engineer gets paged automatically
@@ -100,6 +103,7 @@ notify:
 ```
 
 **Benefits:**
+
 - Email reaches executives and creates audit trail
 - Slack provides real-time visibility
 - Webhook triggers incident response process
@@ -167,7 +171,7 @@ Use different channels based on alert severity:
       url: "${PAGERDUTY_WEBHOOK}"
       headers:
         Authorization: "Token token=${PAGERDUTY_TOKEN}"
-        From: "kg@kylegehring.com"
+        From: "sqlsentinel@kylegehring.com"
 ```
 
 ### Example 2: Data Quality Monitoring
@@ -234,12 +238,12 @@ Use different channels based on alert severity:
 
 ### 1. Match Urgency to Channels
 
-| Urgency | Recommended Channels |
-|---------|---------------------|
+| Urgency  | Recommended Channels                |
+| -------- | ----------------------------------- |
 | Critical | Email + Slack + Webhook (PagerDuty) |
-| High | Slack + Email |
-| Medium | Slack only |
-| Low | Email only |
+| High     | Slack + Email                       |
+| Medium   | Slack only                          |
+| Low      | Email only                          |
 
 ### 2. Avoid Notification Fatigue
 
@@ -305,6 +309,7 @@ notify:
 ### 5. Document Your Notification Strategy
 
 Create a runbook documenting:
+
 - Which alerts go to which channels
 - Expected response times per channel
 - Escalation procedures
@@ -372,7 +377,7 @@ Create separate alerts to test each channel:
   enabled: false
   notify:
     - channel: email
-      recipients: ["kg@kylegehring.com"]
+      recipients: ["sqlsentinel@kylegehring.com"]
 
 # Test Slack only
 - name: "test_slack"
@@ -384,6 +389,7 @@ Create separate alerts to test each channel:
 ```
 
 Run with:
+
 ```bash
 sqlsentinel run alerts.yaml --alert test_email
 sqlsentinel run alerts.yaml --alert test_slack
@@ -392,16 +398,19 @@ sqlsentinel run alerts.yaml --alert test_slack
 ## Cost Considerations
 
 ### Email
+
 - Usually free or very low cost
 - No rate limits for most SMTP providers
 - Good for high-frequency alerts
 
 ### Slack
+
 - Free for webhook usage
 - Rate limit: ~1 message/second
 - Consider batching high-frequency alerts
 
 ### Webhooks
+
 - Cost depends on destination service
 - PagerDuty/Opsgenie: Check your plan limits
 - API services: May have rate limits or costs per request
@@ -409,6 +418,7 @@ sqlsentinel run alerts.yaml --alert test_slack
 ## Security Best Practices
 
 1. **Use Environment Variables**
+
    ```yaml
    # ❌ Bad
    webhook_url: "https://hooks.slack.com/services/T123/B456/SECRET"
@@ -418,6 +428,7 @@ sqlsentinel run alerts.yaml --alert test_slack
    ```
 
 2. **Separate Credentials by Environment**
+
    ```bash
    # Production
    export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/PROD/..."
@@ -427,6 +438,7 @@ sqlsentinel run alerts.yaml --alert test_slack
    ```
 
 3. **Use Different Channels for Different Environments**
+
    ```yaml
    # Production alerts → #prod-alerts
    # Staging alerts → #staging-alerts

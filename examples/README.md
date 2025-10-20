@@ -61,16 +61,19 @@ python -m sqlsentinel.cli history examples/alerts.yaml --limit 20 --state-db sql
 ## Example Alerts
 
 ### 1. Daily Revenue Check
+
 - **Purpose**: Alert when yesterday's revenue falls below $10,000
 - **Expected Result**: OK (sample data has $11,096.50)
 - **Schedule**: Daily at 9 AM
 
 ### 2. High Error Rate
+
 - **Purpose**: Alert when API error rate exceeds 5% in the last hour
 - **Expected Result**: ALERT (sample data has 10% error rate)
 - **Schedule**: Every 15 minutes
 
 ### 3. Data Freshness Check
+
 - **Purpose**: Alert when data pipeline hasn't updated in 24 hours
 - **Expected Result**: OK (sample data updated 30 minutes ago)
 - **Schedule**: Every 6 hours
@@ -103,7 +106,7 @@ export SMTP_PORT=587
 export SMTP_USERNAME=your-email@gmail.com
 export SMTP_PASSWORD=your-app-password
 export SMTP_USE_TLS=true
-export SMTP_FROM_ADDRESS=kg@kylegehring.com
+export SMTP_FROM_ADDRESS=sqlsentinel@kylegehring.com
 ```
 
 Then run without `--dry-run`:
@@ -115,14 +118,17 @@ python -m sqlsentinel.cli run examples/alerts.yaml --state-db sqlite:///examples
 ## Troubleshooting
 
 ### "No such table" errors
+
 - Make sure you ran: `sqlite3 examples/sample_data.db < examples/sample_data.sql`
 
 ### "Configuration validation failed"
+
 - Check your YAML syntax
 - Ensure all required fields are present
 - Run: `python -m sqlsentinel.cli validate examples/alerts.yaml`
 
 ### "SMTP host not configured"
+
 - Set the SMTP environment variables (see above)
 - Or use `--dry-run` to test without sending emails
 
