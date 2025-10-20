@@ -66,3 +66,7 @@ dmypy.json
 # Logs
 *.log
 logs/
+
+# SQLite databases (runtime state)
+*.db
+!examples/sample_data.db
