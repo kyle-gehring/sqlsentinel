@@ -360,11 +360,14 @@ def silence_alert(
         engine = create_engine(state_db_url)
         state_manager = StateManager(engine)
 
-        # Calculate silence end time
-        silence_until = datetime.utcnow() + timedelta(hours=duration_hours)
+        # Convert hours to seconds
+        duration_seconds = duration_hours * 3600
 
         # Silence the alert
-        state_manager.silence_alert(alert_name, silence_until)
+        state_manager.silence_alert(alert_name, duration_seconds)
+
+        # Calculate silence end time for display
+        silence_until = datetime.utcnow() + timedelta(hours=duration_hours)
 
         print(f"✓ Alert '{alert_name}' silenced until {silence_until.isoformat()}")
         print(f"  Duration: {duration_hours} hour(s)")
@@ -467,13 +470,13 @@ def show_status(
         print(f"{'-'*80}")
 
         for alert in alerts_to_show:
-            state = state_manager.get_alert_state(alert.name)
+            state = state_manager.get_state(alert.name)
 
-            if state:
+            if state and state.last_executed_at:
                 status = state.current_status or "Unknown"
                 last_check = (
-                    state.last_checked.strftime("%Y-%m-%d %H:%M:%S")
-                    if state.last_checked
+                    state.last_executed_at.strftime("%Y-%m-%d %H:%M:%S")
+                    if state.last_executed_at
                     else "Never"
                 )
 
