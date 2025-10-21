@@ -1,7 +1,11 @@
 """Command-line interface for SQL Sentinel."""
 
 import argparse
+import logging
+import os
+import signal
 import sys
+import time
 
 from pydantic import BaseModel
 from sqlalchemy import create_engine
@@ -13,6 +17,8 @@ from .database.schema import SchemaManager
 from .executor.alert_executor import AlertExecutor
 from .models.alert import AlertConfig
 from .notifications.factory import NotificationFactory
+from .scheduler.config_watcher import ConfigWatcher
+from .scheduler.scheduler import SchedulerService
 
 
 class DatabaseConfig(BaseModel):
@@ -464,10 +470,10 @@ def show_status(
         engine = create_engine(state_db_url)
         state_manager = StateManager(engine)
 
-        print(f"\nAlert Status Report")
-        print(f"{'='*80}")
+        print("\nAlert Status Report")
+        print("=" * 80)
         print(f"{'Alert Name':<30} {'Status':<15} {'Silenced':<10} {'Last Check':<20}")
-        print(f"{'-'*80}")
+        print("-" * 80)
 
         for alert in alerts_to_show:
             state = state_manager.get_state(alert.name)
@@ -505,6 +511,128 @@ def show_status(
 
         traceback.print_exc()
         return 1
+
+
+def run_daemon(
+    config_file: str,
+    state_db_url: str,
+    database_url: str | None = None,
+    reload_config: bool = False,
+    log_level: str = "INFO",
+    timezone: str = "UTC",
+) -> int:
+    """Run SQL Sentinel as a daemon with scheduled alert execution.
+
+    Args:
+        config_file: Path to YAML configuration file
+        state_db_url: Connection string for state/history database
+        database_url: Connection string for alert queries database
+        reload_config: If True, watch config file for changes and reload
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
+        timezone: Timezone for scheduling (default: UTC)
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
+    # Configure logging
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper()),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    logger = logging.getLogger(__name__)
+
+    # Get database URL from environment if not provided
+    if database_url is None:
+        database_url = os.environ.get("DATABASE_URL")
+        if database_url is None:
+            print(
+                "✗ No database URL provided. Set DATABASE_URL environment variable "
+                "or pass --database-url"
+            )
+            return 1
+
+    logger.info("Starting SQL Sentinel daemon...")
+    logger.info(f"Configuration file: {config_file}")
+    logger.info(f"State database: {state_db_url}")
+    logger.info(f"Alert database: {database_url}")
+    logger.info(f"Timezone: {timezone}")
+    logger.info(f"Config reload: {'enabled' if reload_config else 'disabled'}")
+
+    # Create scheduler service
+    try:
+        scheduler = SchedulerService(
+            config_path=config_file,
+            state_db_url=state_db_url,
+            database_url=database_url,
+            timezone=timezone,
+        )
+    except Exception as e:
+        logger.error(f"Failed to initialize scheduler: {e}")
+        return 1
+
+    # Setup signal handlers for graceful shutdown
+    shutdown_requested = {"value": False}
+
+    def signal_handler(signum: int, frame: object) -> None:
+        """Handle shutdown signals."""
+        sig_name = signal.Signals(signum).name
+        logger.info(f"Received {sig_name} signal, initiating graceful shutdown...")
+        shutdown_requested["value"] = True
+
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
+    # Setup config file watcher if requested
+    watcher = None
+    if reload_config:
+        try:
+            watcher = ConfigWatcher(
+                config_path=config_file,
+                scheduler=scheduler,
+                debounce_seconds=2.0,
+            )
+            watcher.start()
+            logger.info("Configuration file watcher started")
+        except Exception as e:
+            logger.error(f"Failed to start config watcher: {e}")
+            # Continue without watcher
+
+    # Start scheduler
+    try:
+        scheduler.start()
+        logger.info("Scheduler started successfully")
+
+        # Log scheduled jobs
+        jobs = scheduler.get_job_status()
+        logger.info(f"Scheduled {len(jobs)} jobs:")
+        for job in jobs:
+            logger.info(f"  - {job['alert_name']}: next run at {job['next_run']}")
+
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {e}")
+        if watcher:
+            watcher.stop()
+        return 1
+
+    # Main loop - wait for shutdown signal
+    logger.info("SQL Sentinel daemon running. Press Ctrl+C to stop.")
+    try:
+        while not shutdown_requested["value"]:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logger.info("Keyboard interrupt received, shutting down...")
+
+    # Graceful shutdown
+    logger.info("Shutting down scheduler...")
+    scheduler.stop(wait=True)
+
+    if watcher:
+        logger.info("Stopping config watcher...")
+        watcher.stop()
+
+    logger.info("SQL Sentinel daemon stopped")
+    return 0
 
 
 def main() -> int:
@@ -604,6 +732,35 @@ def main() -> int:
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
 
+    # Daemon command
+    daemon_parser = subparsers.add_parser("daemon", help="Run SQL Sentinel as a background daemon")
+    daemon_parser.add_argument("config", help="Path to configuration file")
+    daemon_parser.add_argument(
+        "--state-db",
+        default="sqlite:///sqlsentinel.db",
+        help="State database URL (default: sqlite:///sqlsentinel.db)",
+    )
+    daemon_parser.add_argument(
+        "--database-url",
+        help="Database URL for alert queries (default: from DATABASE_URL env var)",
+    )
+    daemon_parser.add_argument(
+        "--reload",
+        action="store_true",
+        help="Watch config file for changes and reload automatically",
+    )
+    daemon_parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Logging level (default: INFO)",
+    )
+    daemon_parser.add_argument(
+        "--timezone",
+        default="UTC",
+        help="Timezone for scheduling (default: UTC)",
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -628,6 +785,15 @@ def main() -> int:
         return unsilence_alert(args.config, args.state_db, args.alert)
     elif args.command == "status":
         return show_status(args.config, args.state_db, args.alert)
+    elif args.command == "daemon":
+        return run_daemon(
+            config_file=args.config,
+            state_db_url=args.state_db,
+            database_url=args.database_url,
+            reload_config=args.reload,
+            log_level=args.log_level,
+            timezone=args.timezone,
+        )
 
     return 0
 

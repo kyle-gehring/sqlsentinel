@@ -65,7 +65,9 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app/src \
-    STATE_DB_PATH=/app/state/state.db
+    STATE_DB_PATH=/app/state/state.db \
+    STATE_DB_URL=sqlite:////app/state/state.db \
+    CONFIG_PATH=/app/config/alerts.yaml
 
 # Switch to non-root user
 USER sqlsentinel
@@ -76,7 +78,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Default entrypoint: SQL Sentinel CLI
 ENTRYPOINT ["python", "-m", "sqlsentinel.cli"]
-CMD ["--help"]
+# Default command: Run daemon with config reload enabled
+CMD ["daemon", "/app/config/alerts.yaml", "--state-db", "${STATE_DB_URL}", "--reload", "--log-level", "INFO"]
 
 # Labels for metadata
 LABEL org.opencontainers.image.title="SQL Sentinel" \

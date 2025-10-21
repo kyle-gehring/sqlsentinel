@@ -28,11 +28,33 @@ This is a **greenfield project** - currently only documentation exists. The syst
 
 ## Development Setup
 
-Since this is a new project, there are no existing build commands. The development environment is configured for:
+The development environment is configured for:
 
 - DevContainer with Python development environment
 - VS Code with ESLint, Prettier, and Claude Code extensions
 - Zsh terminal with Git support
+- **Poetry** for Python dependency management
+
+### Important: Running Commands
+
+**CRITICAL**: All Python commands (pytest, python, etc.) must be run with `poetry run` prefix because dependencies are installed in a Poetry virtual environment.
+
+**Correct:**
+```bash
+poetry run pytest tests/
+poetry run python -m sqlsentinel.cli --help
+poetry run black src/
+poetry run ruff check src/
+poetry run mypy src/
+```
+
+**Incorrect:**
+```bash
+pytest tests/              # Will fail - packages not found
+python -m sqlsentinel.cli  # Will fail - packages not found
+```
+
+Dependencies are managed via `pyproject.toml` and installed automatically when the devcontainer is built via the `postCreateCommand: poetry install` in `.devcontainer/devcontainer.json`.
 
 ## Key Implementation Guidelines
 
@@ -129,4 +151,6 @@ docker run -d \
 
 ## General Notes
 
-1. **Dependencies**: All dependencies should be managed through the devcontainer, not installed with pip or another package manager.
+1. **Dependencies**: All dependencies are managed via `pyproject.toml` and Poetry. When adding new dependencies, add them to `pyproject.toml` and the devcontainer will install them on rebuild. Do NOT use `pip install` or `poetry install` manually - the devcontainer handles this.
+
+2. **Running Commands**: Always use `poetry run` prefix for all Python commands (see Development Setup section above).

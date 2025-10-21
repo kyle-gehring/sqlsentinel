@@ -9,9 +9,11 @@ services:
     container_name: sqlsentinel
     restart: unless-stopped
 
-    # Override default command to run alerts
-    # Example: Run specific alert configuration
-    # command: ["run", "/config/alerts.yaml"]
+    # Default command runs daemon (scheduler) - defined in Dockerfile
+    # Override to run manual commands:
+    # command: ["run", "/app/config/alerts.yaml"]          # Run all alerts once
+    # command: ["validate", "/app/config/alerts.yaml"]     # Validate configuration
+    # command: ["history", "/app/config/alerts.yaml"]      # Show execution history
 
     # Environment variables
     environment:
@@ -33,8 +35,12 @@ services:
       - WEBHOOK_URL=${WEBHOOK_URL:-}
       - WEBHOOK_AUTH_HEADER=${WEBHOOK_AUTH_HEADER:-}
 
-      # State database path
+      # State database
       - STATE_DB_PATH=/app/state/state.db
+      - STATE_DB_URL=sqlite:////app/state/state.db
+
+      # Scheduler settings
+      - TIMEZONE=${TIMEZONE:-UTC}
 
       # Logging
       - LOG_LEVEL=${LOG_LEVEL:-INFO}

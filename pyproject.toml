@@ -24,6 +24,8 @@ pydantic = "^2.0"
 sqlalchemy = "^2.0"
 pyyaml = "^6.0"
 croniter = "^2.0"
+apscheduler = "^3.10"
+watchdog = "^5.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4"
@@ -86,6 +88,14 @@ disallow_untyped_calls = false
 
 [[tool.mypy.overrides]]
 module = "croniter"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "apscheduler.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "watchdog.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
