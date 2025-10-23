@@ -10,7 +10,7 @@ from sqlalchemy.engine import Engine
 
 from ..config.loader import ConfigLoader
 from ..config.validator import ConfigValidator
-from ..database.adapter import DatabaseAdapter
+from ..database.factory import AdapterFactory
 from ..executor.alert_executor import AlertExecutor
 from ..models.alert import AlertConfig
 from ..models.errors import ConfigurationError
@@ -326,7 +326,7 @@ class SchedulerService:
                 )
                 return
 
-            db_adapter = DatabaseAdapter(db_url)
+            db_adapter = AdapterFactory.create_adapter(db_url)
 
             # Create alert executor
             executor = AlertExecutor(

@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 
 from .config.loader import ConfigLoader
 from .config.validator import ConfigValidator
-from .database.adapter import DatabaseAdapter
+from .database.factory import AdapterFactory
 from .database.schema import SchemaManager
 from .executor.alert_executor import AlertExecutor
 from .models.alert import AlertConfig
@@ -111,8 +111,8 @@ def run_alert(
         notification_factory = NotificationFactory()
         executor = AlertExecutor(engine, notification_factory)
 
-        # Create database adapter for alert query
-        db_adapter = DatabaseAdapter(config.database.url)
+        # Create database adapter for alert query (auto-detects BigQuery vs SQLAlchemy)
+        db_adapter = AdapterFactory.create_adapter(config.database.url)
         db_adapter.connect()
 
         # Execute alert
@@ -189,8 +189,8 @@ def run_all_alerts(
         notification_factory = NotificationFactory()
         executor = AlertExecutor(engine, notification_factory)
 
-        # Create database adapter
-        db_adapter = DatabaseAdapter(config.database.url)
+        # Create database adapter (auto-detects BigQuery vs SQLAlchemy)
+        db_adapter = AdapterFactory.create_adapter(config.database.url)
         db_adapter.connect()
 
         if dry_run:

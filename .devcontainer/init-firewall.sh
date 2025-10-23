@@ -63,23 +63,30 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr" -exist
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# Resolve and add other allowed domains
-for domain in \
-    "registry.npmjs.org" \
-    "api.anthropic.com" \
-    "sentry.io" \
-    "statsig.anthropic.com" \
-    "statsig.com" \
-    "marketplace.visualstudio.com" \
-    "vscode.blob.core.windows.net" \
-    "update.code.visualstudio.com" \
-    "pypi.org" \
-    "files.pythonhosted.org" \
-    "download.docker.com" \
-    "registry-1.docker.io" \
-    "auth.docker.io" \
-    "production.cloudflare.docker.com" \
-    "mail.kylegehring.com"; do
+# Build domain list (including BigQuery/Google Cloud for integration tests)
+DOMAIN_LIST=(
+    "registry.npmjs.org"
+    "api.anthropic.com"
+    "sentry.io"
+    "statsig.anthropic.com"
+    "statsig.com"
+    "marketplace.visualstudio.com"
+    "vscode.blob.core.windows.net"
+    "update.code.visualstudio.com"
+    "pypi.org"
+    "files.pythonhosted.org"
+    "download.docker.com"
+    "registry-1.docker.io"
+    "auth.docker.io"
+    "production.cloudflare.docker.com"
+    "mail.kylegehring.com"
+    "bigquery.googleapis.com"
+    "oauth2.googleapis.com"
+    "www.googleapis.com"
+)
+
+# Resolve and add all allowed domains
+for domain in "${DOMAIN_LIST[@]}"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then

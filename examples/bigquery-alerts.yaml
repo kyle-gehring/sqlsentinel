@@ -1,0 +1,388 @@
+# BigQuery Alert Examples for SQL Sentinel
+#
+# These examples demonstrate how to use SQL Sentinel with Google BigQuery
+# to monitor data quality, business metrics, and operational health.
+#
+# Setup:
+#   1. Set your GCP project ID and credentials:
+#      export BIGQUERY_PROJECT_ID=your-project-id
+#      export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+#
+#   2. Update the database URL in this file
+#
+#   3. Run alerts:
+#      sqlsentinel run examples/bigquery-alerts.yaml
+#
+#   4. Or run as daemon:
+#      sqlsentinel daemon examples/bigquery-alerts.yaml
+
+database:
+  # BigQuery connection string format:
+  # bigquery://PROJECT_ID/DATASET?credentials=/path/to/key.json&location=US
+  #
+  # The credentials parameter is optional if using Application Default Credentials (ADC)
+  url: "bigquery://YOUR_PROJECT_ID"
+
+alerts:
+  # =============================================================================
+  # Example 1: Data Freshness Alert
+  # =============================================================================
+  # Alert when data hasn't been updated recently
+  - name: "data_freshness_check"
+    description: "Alert if no new records in the last 24 hours"
+    enabled: true
+    query: |
+      SELECT
+        CASE
+          WHEN hours_since_last_record > 24 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        hours_since_last_record as actual_value,
+        24 as threshold,
+        last_record_time,
+        total_records
+      FROM (
+        SELECT
+          TIMESTAMP_DIFF(CURRENT_TIMESTAMP(), MAX(created_at), HOUR) as hours_since_last_record,
+          MAX(created_at) as last_record_time,
+          COUNT(*) as total_records
+        FROM `bigquery-public-data.usa_names.usa_1910_current`
+        WHERE year >= 2020
+      )
+    schedule: "0 */6 * * *"  # Every 6 hours
+    notify:
+      - channel: email
+        recipients: ["data-team@company.com"]
+      - channel: slack
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+
+  # =============================================================================
+  # Example 2: Data Quality - NULL Value Check
+  # =============================================================================
+  # Alert when critical columns have too many NULL values
+  - name: "null_value_check"
+    description: "Alert when NULL percentage exceeds threshold"
+    enabled: true
+    query: |
+      SELECT
+        CASE
+          WHEN null_percentage > 5.0 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        ROUND(null_percentage, 2) as actual_value,
+        5.0 as threshold,
+        column_name,
+        total_rows,
+        null_count
+      FROM (
+        SELECT
+          'name' as column_name,
+          COUNT(*) as total_rows,
+          COUNTIF(name IS NULL) as null_count,
+          (COUNTIF(name IS NULL) * 100.0 / COUNT(*)) as null_percentage
+        FROM `bigquery-public-data.usa_names.usa_1910_current`
+        WHERE year = 2020
+      )
+    schedule: "0 0 * * *"  # Daily at midnight
+    notify:
+      - channel: email
+        recipients: ["data-quality@company.com"]
+
+  # =============================================================================
+  # Example 3: Business Metric - Volume Threshold
+  # =============================================================================
+  # Alert when daily volume falls below expected threshold
+  - name: "daily_volume_check"
+    description: "Alert when daily record count is below threshold"
+    enabled: true
+    query: |
+      SELECT
+        CASE
+          WHEN record_count < 1000 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        record_count as actual_value,
+        1000 as threshold,
+        check_date
+      FROM (
+        SELECT
+          COUNT(*) as record_count,
+          MAX(year) as check_date
+        FROM `bigquery-public-data.usa_names.usa_1910_current`
+        WHERE year = 2020 AND state = 'CA'
+      )
+    schedule: "0 9 * * *"  # Daily at 9 AM
+    notify:
+      - channel: email
+        recipients: ["analytics@company.com"]
+
+  # =============================================================================
+  # Example 4: Anomaly Detection - Statistical Outliers
+  # =============================================================================
+  # Alert when values are statistical outliers (beyond 2 std deviations)
+  - name: "statistical_outlier_check"
+    description: "Alert on statistical anomalies in the data"
+    enabled: true
+    query: |
+      WITH stats AS (
+        SELECT
+          AVG(number) as mean_value,
+          STDDEV(number) as std_dev,
+          MAX(number) as max_value,
+          MIN(number) as min_value
+        FROM `bigquery-public-data.usa_names.usa_1910_current`
+        WHERE year = 2020 AND state = 'CA'
+      ),
+      outlier_check AS (
+        SELECT
+          max_value,
+          mean_value,
+          std_dev,
+          (max_value - mean_value) / NULLIF(std_dev, 0) as z_score
+        FROM stats
+      )
+      SELECT
+        CASE
+          WHEN ABS(z_score) > 2.0 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        ROUND(z_score, 2) as actual_value,
+        2.0 as threshold,
+        ROUND(max_value, 0) as max_value,
+        ROUND(mean_value, 0) as mean_value,
+        ROUND(std_dev, 0) as std_deviation
+      FROM outlier_check
+    schedule: "0 */12 * * *"  # Every 12 hours
+    notify:
+      - channel: webhook
+        url: "${WEBHOOK_URL}"
+        headers:
+          Authorization: "Bearer ${WEBHOOK_TOKEN}"
+
+  # =============================================================================
+  # Example 5: Schema Validation
+  # =============================================================================
+  # Alert when expected columns are missing or data types change
+  - name: "schema_validation"
+    description: "Alert on schema changes or missing columns"
+    enabled: true
+    query: |
+      WITH schema_check AS (
+        SELECT
+          COUNT(DISTINCT column_name) as column_count,
+          COUNTIF(column_name IN ('name', 'state', 'year', 'gender', 'number')) as expected_columns
+        FROM `bigquery-public-data.usa_names`.INFORMATION_SCHEMA.COLUMNS
+        WHERE table_name = 'usa_1910_current'
+      )
+      SELECT
+        CASE
+          WHEN expected_columns < 5 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        expected_columns as actual_value,
+        5 as threshold,
+        column_count as total_columns
+      FROM schema_check
+    schedule: "0 1 * * *"  # Daily at 1 AM
+    notify:
+      - channel: email
+        recipients: ["data-engineering@company.com"]
+
+  # =============================================================================
+  # Example 6: Duplicate Detection
+  # =============================================================================
+  # Alert when duplicate records are found
+  - name: "duplicate_detection"
+    description: "Alert when duplicate records exceed threshold"
+    enabled: true
+    query: |
+      WITH duplicates AS (
+        SELECT
+          year,
+          state,
+          name,
+          gender,
+          COUNT(*) as duplicate_count
+        FROM `bigquery-public-data.usa_names.usa_1910_current`
+        WHERE year = 2020
+        GROUP BY year, state, name, gender
+        HAVING COUNT(*) > 1
+      )
+      SELECT
+        CASE
+          WHEN total_duplicates > 0 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        total_duplicates as actual_value,
+        0 as threshold,
+        duplicate_groups
+      FROM (
+        SELECT
+          COUNT(*) as duplicate_groups,
+          SUM(duplicate_count) as total_duplicates
+        FROM duplicates
+      )
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    notify:
+      - channel: email
+        recipients: ["data-quality@company.com"]
+
+  # =============================================================================
+  # Example 7: Row Count Comparison (Day-over-Day)
+  # =============================================================================
+  # Alert when daily row count drops significantly compared to previous day
+  - name: "row_count_comparison"
+    description: "Alert on significant row count changes"
+    enabled: true
+    query: |
+      WITH daily_counts AS (
+        SELECT
+          year,
+          COUNT(*) as row_count
+        FROM `bigquery-public-data.usa_names.usa_1910_current`
+        WHERE year IN (2019, 2020)
+        GROUP BY year
+      ),
+      comparison AS (
+        SELECT
+          MAX(CASE WHEN year = 2020 THEN row_count END) as current_count,
+          MAX(CASE WHEN year = 2019 THEN row_count END) as previous_count,
+          (MAX(CASE WHEN year = 2020 THEN row_count END) * 100.0 /
+           NULLIF(MAX(CASE WHEN year = 2019 THEN row_count END), 0) - 100) as percent_change
+        FROM daily_counts
+      )
+      SELECT
+        CASE
+          WHEN ABS(percent_change) > 20 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        ROUND(percent_change, 2) as actual_value,
+        20.0 as threshold,
+        current_count,
+        previous_count
+      FROM comparison
+    schedule: "0 8 * * *"  # Daily at 8 AM
+    notify:
+      - channel: email
+        recipients: ["analytics@company.com"]
+
+  # =============================================================================
+  # Example 8: Query Cost Monitoring
+  # =============================================================================
+  # Alert when recent queries are expensive (use INFORMATION_SCHEMA.JOBS)
+  - name: "query_cost_monitoring"
+    description: "Alert when query costs exceed budget"
+    enabled: false  # Disabled by default - requires proper permissions
+    query: |
+      WITH recent_queries AS (
+        SELECT
+          SUM(total_bytes_billed) / POW(10, 12) as total_tb_billed,
+          COUNT(*) as query_count,
+          MAX(creation_time) as last_query_time
+        FROM `YOUR_PROJECT_ID.region-us.INFORMATION_SCHEMA.JOBS_BY_PROJECT`
+        WHERE creation_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)
+          AND job_type = 'QUERY'
+          AND state = 'DONE'
+      )
+      SELECT
+        CASE
+          WHEN total_tb_billed > 1.0 THEN 'ALERT'  -- More than 1 TB in 24 hours
+          ELSE 'OK'
+        END as status,
+        ROUND(total_tb_billed, 3) as actual_value,
+        1.0 as threshold,
+        query_count,
+        last_query_time
+      FROM recent_queries
+    schedule: "0 */6 * * *"  # Every 6 hours
+    notify:
+      - channel: email
+        recipients: ["bigquery-admins@company.com"]
+
+  # =============================================================================
+  # Example 9: Data Completeness Check
+  # =============================================================================
+  # Alert when expected data ranges are incomplete
+  - name: "data_completeness_check"
+    description: "Alert when data is missing for expected time periods"
+    enabled: true
+    query: |
+      WITH expected_years AS (
+        SELECT year
+        FROM UNNEST(GENERATE_ARRAY(2018, 2020)) as year
+      ),
+      actual_years AS (
+        SELECT DISTINCT year
+        FROM `bigquery-public-data.usa_names.usa_1910_current`
+        WHERE year BETWEEN 2018 AND 2020
+      ),
+      missing_years AS (
+        SELECT e.year
+        FROM expected_years e
+        LEFT JOIN actual_years a ON e.year = a.year
+        WHERE a.year IS NULL
+      )
+      SELECT
+        CASE
+          WHEN missing_count > 0 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        missing_count as actual_value,
+        0 as threshold,
+        ARRAY_TO_STRING(ARRAY_AGG(year ORDER BY year), ', ') as missing_years
+      FROM (
+        SELECT
+          COUNT(*) as missing_count
+        FROM missing_years
+      )
+      CROSS JOIN missing_years
+      GROUP BY missing_count
+    schedule: "0 10 * * *"  # Daily at 10 AM
+    notify:
+      - channel: email
+        recipients: ["data-ops@company.com"]
+
+  # =============================================================================
+  # Example 10: Multi-Condition Business Rule
+  # =============================================================================
+  # Alert on complex business rules with multiple conditions
+  - name: "business_rule_validation"
+    description: "Multi-condition business logic validation"
+    enabled: true
+    query: |
+      WITH metrics AS (
+        SELECT
+          state,
+          COUNT(DISTINCT name) as unique_names,
+          SUM(number) as total_count,
+          AVG(number) as avg_count,
+          MAX(number) as max_count
+        FROM `bigquery-public-data.usa_names.usa_1910_current`
+        WHERE year = 2020 AND state = 'NY'
+        GROUP BY state
+      )
+      SELECT
+        CASE
+          -- Alert if any condition fails
+          WHEN unique_names < 100 THEN 'ALERT'
+          WHEN total_count < 10000 THEN 'ALERT'
+          WHEN avg_count < 50 THEN 'ALERT'
+          ELSE 'OK'
+        END as status,
+        CONCAT(
+          'Names:', unique_names,
+          ' Total:', total_count,
+          ' Avg:', ROUND(avg_count, 1)
+        ) as details,
+        unique_names,
+        total_count,
+        ROUND(avg_count, 1) as avg_count,
+        max_count,
+        state
+      FROM metrics
+    schedule: "0 */4 * * *"  # Every 4 hours
+    notify:
+      - channel: slack
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+      - channel: email
+        recipients: ["business-analytics@company.com"]

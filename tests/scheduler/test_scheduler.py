@@ -476,7 +476,7 @@ alerts:
         service._execute_alert_job("test_alert_1")
 
     @patch("sqlsentinel.scheduler.scheduler.AlertExecutor")
-    @patch("sqlsentinel.scheduler.scheduler.DatabaseAdapter")
+    @patch("sqlsentinel.scheduler.scheduler.AdapterFactory.create_adapter")
     def test_execute_alert_job_success(
         self, mock_db_adapter_class, mock_executor_class, scheduler_service
     ):

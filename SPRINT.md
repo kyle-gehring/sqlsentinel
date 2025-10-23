@@ -1,18 +1,36 @@
 # Current Sprint
 
 **Sprint:** 3.2 - BigQuery Integration
-**Status:** 🟡 PLANNED
+**Status:** 🟢 READY TO START
 **Duration:** Days 19-22 (4 days)
 **Started:** TBD
 **Completed:** TBD
 
 ## Sprint Goal
 
-Add BigQuery support to SQL Sentinel, enabling alerts to query Google Cloud Platform's analytics warehouse.
+Add BigQuery support to SQL Sentinel, enabling alerts to query Google Cloud Platform's analytics warehouse. This completes Week 3 deliverables and provides the first cloud data warehouse integration.
+
+## Key Deliverables
+
+1. **BigQuery Connection Adapter** - Native BigQuery support via google-cloud-bigquery SDK
+2. **Authentication** - Service account keys and Application Default Credentials (ADC)
+3. **Adapter Factory** - URL-based routing (bigquery:// vs postgresql:// etc.)
+4. **Query Execution** - Execute alerts against BigQuery datasets with cost awareness
+5. **Testing** - 30+ new tests, >85% coverage maintained
+6. **Documentation** - Setup guide, authentication guide, cost management, examples
+
+## Timeline
+
+| Day | Phase | Focus | Key Deliverables |
+|-----|-------|-------|------------------|
+| **Day 19** | 1-2 | SDK setup + Query execution | BigQueryAdapter class, execute_query, 15 tests |
+| **Day 20** | 3-4 | Factory + Authentication | Adapter factory, auth methods, 14 tests |
+| **Day 21** | 5-6 | Cost awareness + Integration | Dry-run, integration tests, examples |
+| **Day 22** | 7-8 | Testing + Documentation | Full coverage, docs, completion report |
 
 ## Detailed Plan
 
-See: IMPLEMENTATION_ROADMAP.md for next sprint planning
+See: [docs/sprints/phase-1/week-3/sprint-3.2-plan.md](docs/sprints/phase-1/week-3/sprint-3.2-plan.md) for complete implementation plan
 
 ---
 

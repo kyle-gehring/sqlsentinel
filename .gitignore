@@ -70,3 +70,9 @@ logs/
 # SQLite databases (runtime state)
 *.db
 !examples/sample_data.db
+.bigquery_credentials.json
+.bigquery_*.json
+
+# Service account keys and secrets
+.secrets/
+.gcp/

@@ -125,7 +125,7 @@ class TestRunAlert:
     @patch("sqlsentinel.cli.create_engine")
     @patch("sqlsentinel.cli.NotificationFactory")
     @patch("sqlsentinel.cli.AlertExecutor")
-    @patch("sqlsentinel.cli.DatabaseAdapter")
+    @patch("sqlsentinel.cli.AdapterFactory.create_adapter")
     def test_run_alert_success(
         self,
         mock_adapter_class,
@@ -230,7 +230,7 @@ class TestRunAlert:
     @patch("sqlsentinel.cli.create_engine")
     @patch("sqlsentinel.cli.NotificationFactory")
     @patch("sqlsentinel.cli.AlertExecutor")
-    @patch("sqlsentinel.cli.DatabaseAdapter")
+    @patch("sqlsentinel.cli.AdapterFactory.create_adapter")
     def test_run_alert_error_status(
         self,
         mock_adapter_class,
@@ -282,7 +282,7 @@ class TestRunAlert:
     @patch("sqlsentinel.cli.create_engine")
     @patch("sqlsentinel.cli.NotificationFactory")
     @patch("sqlsentinel.cli.AlertExecutor")
-    @patch("sqlsentinel.cli.DatabaseAdapter")
+    @patch("sqlsentinel.cli.AdapterFactory.create_adapter")
     def test_run_alert_dry_run(
         self,
         mock_adapter_class,
@@ -356,7 +356,7 @@ class TestRunAllAlerts:
     @patch("sqlsentinel.cli.create_engine")
     @patch("sqlsentinel.cli.NotificationFactory")
     @patch("sqlsentinel.cli.AlertExecutor")
-    @patch("sqlsentinel.cli.DatabaseAdapter")
+    @patch("sqlsentinel.cli.AdapterFactory.create_adapter")
     def test_run_all_alerts_success(
         self,
         mock_adapter_class,
@@ -427,7 +427,7 @@ class TestRunAllAlerts:
     @patch("sqlsentinel.cli.create_engine")
     @patch("sqlsentinel.cli.NotificationFactory")
     @patch("sqlsentinel.cli.AlertExecutor")
-    @patch("sqlsentinel.cli.DatabaseAdapter")
+    @patch("sqlsentinel.cli.AdapterFactory.create_adapter")
     def test_run_all_alerts_with_disabled(
         self,
         mock_adapter_class,
@@ -498,7 +498,7 @@ class TestRunAllAlerts:
     @patch("sqlsentinel.cli.create_engine")
     @patch("sqlsentinel.cli.NotificationFactory")
     @patch("sqlsentinel.cli.AlertExecutor")
-    @patch("sqlsentinel.cli.DatabaseAdapter")
+    @patch("sqlsentinel.cli.AdapterFactory.create_adapter")
     def test_run_all_alerts_with_failures(
         self,
         mock_adapter_class,
@@ -571,7 +571,7 @@ class TestRunAllAlerts:
     @patch("sqlsentinel.cli.create_engine")
     @patch("sqlsentinel.cli.NotificationFactory")
     @patch("sqlsentinel.cli.AlertExecutor")
-    @patch("sqlsentinel.cli.DatabaseAdapter")
+    @patch("sqlsentinel.cli.AdapterFactory.create_adapter")
     def test_run_all_alerts_dry_run(
         self,
         mock_adapter_class,
