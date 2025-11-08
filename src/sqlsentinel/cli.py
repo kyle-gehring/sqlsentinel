@@ -1,20 +1,30 @@
 """Command-line interface for SQL Sentinel."""
 
 import argparse
+import json
 import logging
 import os
 import signal
 import sys
 import time
+from datetime import datetime
 
 from pydantic import BaseModel
 from sqlalchemy import create_engine
 
 from .config.loader import ConfigLoader
 from .config.validator import ConfigValidator
+from .logging import configure_logging, configure_from_env
+from .metrics import get_metrics
 from .database.factory import AdapterFactory
 from .database.schema import SchemaManager
 from .executor.alert_executor import AlertExecutor
+from .health.checks import (
+    aggregate_health_status,
+    check_database,
+    check_notifications,
+    check_scheduler,
+)
 from .models.alert import AlertConfig
 from .notifications.factory import NotificationFactory
 from .scheduler.config_watcher import ConfigWatcher
@@ -513,6 +523,166 @@ def show_status(
         return 1
 
 
+def show_metrics(output_format: str = "text") -> int:
+    """Display collected metrics.
+
+    Args:
+        output_format: Output format ('text' or 'json')
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
+    try:
+        metrics = get_metrics()
+
+        if output_format == "json":
+            # Return Prometheus format as text (which is line-based)
+            metrics_text = metrics.get_metrics_text()
+            print(metrics_text)
+        else:
+            # Text format - pretty print metrics
+            print("\n" + "=" * 60)
+            print("SQL Sentinel Metrics")
+            print("=" * 60)
+            print("\nPrometheus Format Output:")
+            print("-" * 60)
+            metrics_text = metrics.get_metrics_text()
+            # Print only non-comment lines for readability
+            for line in metrics_text.split("\n"):
+                if line and not line.startswith("#"):
+                    print(line)
+            print("=" * 60 + "\n")
+
+        return 0
+
+    except Exception as e:
+        print(f"✗ Failed to retrieve metrics: {e}")
+        return 1
+
+
+def healthcheck(
+    config_file: str,
+    state_db_url: str,
+    database_url: str | None = None,
+    output_format: str = "text",
+) -> int:
+    """Check health of SQL Sentinel and dependencies.
+
+    Args:
+        config_file: Path to YAML configuration file
+        state_db_url: Connection string for state/history database
+        database_url: Connection string for alert queries database (optional)
+        output_format: Output format ('text' or 'json')
+
+    Returns:
+        Exit code (0 for healthy, 1 for unhealthy)
+    """
+    try:
+        # Get database URL from environment if not provided
+        if database_url is None:
+            database_url = os.environ.get("DATABASE_URL")
+
+        # Load configuration
+        config = load_config(config_file)
+
+        # Initialize components for checking
+        state_engine = create_engine(state_db_url)
+        notification_factory = NotificationFactory()
+
+        # Perform health checks
+        checks: dict[str, object] = {}
+
+        # Check state database
+        checks["state_database"] = check_database(state_engine)
+
+        # Check alert database if provided
+        if database_url:
+            try:
+                alert_engine = create_engine(database_url)
+                checks["alert_database"] = check_database(alert_engine)
+            except Exception as e:
+                checks["alert_database"] = {
+                    "status": "unhealthy",
+                    "message": f"Failed to connect: {str(e)}",
+                }
+        else:
+            checks["alert_database"] = {
+                "status": "not_configured",
+                "message": "DATABASE_URL not set",
+            }
+
+        # Check notifications
+        checks["notifications"] = check_notifications(notification_factory)
+
+        # Aggregate status
+        overall_status = aggregate_health_status(checks)
+
+        # Output results
+        if output_format == "json":
+            output = {
+                "status": overall_status,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "checks": checks,
+            }
+            print(json.dumps(output, indent=2, default=str))
+        else:
+            # Text format
+            print("\n" + "=" * 60)
+            print("SQL Sentinel Health Check")
+            print("=" * 60)
+
+            for check_name, check_result in checks.items():
+                check_result_dict = check_result if isinstance(check_result, dict) else {}
+                status = check_result_dict.get("status", "unknown")
+                status_symbol = (
+                    "✓"
+                    if status == "healthy"
+                    else "⚠" if status == "degraded" else "⊘" if status == "not_configured" else "✗"
+                )
+                print(f"\n{status_symbol} {check_name.replace('_', ' ').title()}")
+                print(f"  Status: {status}")
+
+                if "latency_ms" in check_result_dict and check_result_dict["latency_ms"]:
+                    print(f"  Latency: {check_result_dict['latency_ms']}ms")
+
+                if "jobs_count" in check_result_dict:
+                    print(f"  Jobs: {check_result_dict['jobs_count']}")
+
+                if "message" in check_result_dict:
+                    print(f"  Message: {check_result_dict['message']}")
+
+                if "channels" in check_result_dict:
+                    print("  Channels:")
+                    for channel_name, channel_status in check_result_dict["channels"].items():
+                        chan_status = channel_status.get("status", "unknown") if isinstance(
+                            channel_status, dict
+                        ) else "unknown"
+                        chan_symbol = "✓" if chan_status == "healthy" else "⊘"
+                        print(f"    {chan_symbol} {channel_name}: {chan_status}")
+
+            print(f"\n{'='*60}")
+            print(f"Overall Status: {overall_status.upper()}")
+            print(f"{'='*60}\n")
+
+        # Return appropriate exit code
+        if overall_status == "unhealthy":
+            return 1
+        elif overall_status == "degraded":
+            return 0  # Degraded but not completely unhealthy
+        return 0
+
+    except Exception as e:
+        print(f"✗ Healthcheck failed: {e}")
+        if output_format == "json":
+            output = {
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            }
+            print(json.dumps(output, indent=2))
+        return 1
+
+
 def run_daemon(
     config_file: str,
     state_db_url: str,
@@ -535,11 +705,7 @@ def run_daemon(
         Exit code (0 for success, 1 for failure)
     """
     # Configure logging
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper()),
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    configure_logging(log_level=log_level, log_format="json")
     logger = logging.getLogger(__name__)
 
     # Get database URL from environment if not provided
@@ -732,6 +898,34 @@ def main() -> int:
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
 
+    # Healthcheck command
+    healthcheck_parser = subparsers.add_parser("healthcheck", help="Check system health")
+    healthcheck_parser.add_argument("config", help="Path to configuration file")
+    healthcheck_parser.add_argument(
+        "--state-db",
+        default="sqlite:///sqlsentinel.db",
+        help="State database URL (default: sqlite:///sqlsentinel.db)",
+    )
+    healthcheck_parser.add_argument(
+        "--database-url",
+        help="Database URL for alert queries (default: from DATABASE_URL env var)",
+    )
+    healthcheck_parser.add_argument(
+        "--output",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    # Metrics command
+    metrics_parser = subparsers.add_parser("metrics", help="Show collected metrics")
+    metrics_parser.add_argument(
+        "--output",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
     # Daemon command
     daemon_parser = subparsers.add_parser("daemon", help="Run SQL Sentinel as a background daemon")
     daemon_parser.add_argument("config", help="Path to configuration file")
@@ -785,6 +979,15 @@ def main() -> int:
         return unsilence_alert(args.config, args.state_db, args.alert)
     elif args.command == "status":
         return show_status(args.config, args.state_db, args.alert)
+    elif args.command == "healthcheck":
+        return healthcheck(
+            config_file=args.config,
+            state_db_url=args.state_db,
+            database_url=args.database_url,
+            output_format=args.output,
+        )
+    elif args.command == "metrics":
+        return show_metrics(output_format=args.output)
     elif args.command == "daemon":
         return run_daemon(
             config_file=args.config,

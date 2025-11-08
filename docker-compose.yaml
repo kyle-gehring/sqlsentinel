@@ -44,6 +44,7 @@ services:
 
       # Logging
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
 
     # Volume mounts
     volumes:
@@ -60,9 +61,9 @@ services:
     networks:
       - sqlsentinel-network
 
-    # Health check
+    # Health check (uses new healthcheck CLI command)
     healthcheck:
-      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      test: ["CMD", "python", "-m", "sqlsentinel.cli", "healthcheck", "/app/config/alerts.yaml", "--state-db", "sqlite:////app/state/state.db"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -1,40 +1,61 @@
 # Current Sprint
 
-**Sprint:** 3.2 - BigQuery Integration
+**Sprint:** 4.1 - Docker & Deployment
 **Status:** 🟢 READY TO START
-**Duration:** Days 19-22 (4 days)
+**Duration:** Days 22-24 (3 days)
 **Started:** TBD
 **Completed:** TBD
 
 ## Sprint Goal
 
-Add BigQuery support to SQL Sentinel, enabling alerts to query Google Cloud Platform's analytics warehouse. This completes Week 3 deliverables and provides the first cloud data warehouse integration.
+Optimize SQL Sentinel's Docker deployment for production use with enhanced monitoring, health checks, and operational tooling. Transform the existing Docker setup into a production-ready deployment solution with comprehensive observability.
 
 ## Key Deliverables
 
-1. **BigQuery Connection Adapter** - Native BigQuery support via google-cloud-bigquery SDK
-2. **Authentication** - Service account keys and Application Default Credentials (ADC)
-3. **Adapter Factory** - URL-based routing (bigquery:// vs postgresql:// etc.)
-4. **Query Execution** - Execute alerts against BigQuery datasets with cost awareness
-5. **Testing** - 30+ new tests, >85% coverage maintained
-6. **Documentation** - Setup guide, authentication guide, cost management, examples
+1. **Health Check System** - `/health` endpoint with real application status checks
+2. **Metrics Collection** - `/metrics` endpoint with Prometheus-compatible metrics
+3. **Structured Logging** - JSON-formatted logs with contextual fields
+4. **Docker Optimization** - Image size <500MB, startup time <10s
+5. **Deployment Templates** - Multiple docker-compose scenarios (dev, prod, test, monitoring)
+6. **Operational Tooling** - Scripts for build, test, health validation, monitoring
+7. **Documentation** - Deployment guides, API reference, troubleshooting
 
 ## Timeline
 
 | Day | Phase | Focus | Key Deliverables |
 |-----|-------|-------|------------------|
-| **Day 19** | 1-2 | SDK setup + Query execution | BigQueryAdapter class, execute_query, 15 tests |
-| **Day 20** | 3-4 | Factory + Authentication | Adapter factory, auth methods, 14 tests |
-| **Day 21** | 5-6 | Cost awareness + Integration | Dry-run, integration tests, examples |
-| **Day 22** | 7-8 | Testing + Documentation | Full coverage, docs, completion report |
+| **Day 22** | 1-2 | Health + Metrics | Health endpoint, metrics endpoint, 35 tests |
+| **Day 23** | 3-4 | Logging + Optimization | Structured logging, optimized image, benchmarks |
+| **Day 24** | 5-8 | Templates + Docs | Compose templates, scripts, documentation, completion report |
 
 ## Detailed Plan
 
-See: [docs/sprints/phase-1/week-3/sprint-3.2-plan.md](docs/sprints/phase-1/week-3/sprint-3.2-plan.md) for complete implementation plan
+See: [docs/sprints/phase-1/week-4/sprint-4.1-plan.md](docs/sprints/phase-1/week-4/sprint-4.1-plan.md) for complete implementation plan
 
 ---
 
 ## Completed Sprints
+
+### Sprint 3.2 - BigQuery Integration ✅
+**Completed:** 2025-10-22
+**Coverage:** 89% (maintained from Sprint 3.1)
+**Tests:** 412 passing (391 unit + 21 integration; 78 new tests added)
+**Key Deliverables:**
+- Native BigQuery support via google-cloud-bigquery SDK
+- Comprehensive authentication (service account + ADC)
+- Cost awareness features (dry-run estimation)
+- Adapter factory pattern for multi-database support
+- Complete documentation (3 guides, 10 examples)
+- Zero breaking changes
+
+**Quick Summary:**
+- ✅ BigQueryAdapter (248 lines, 97% coverage)
+- ✅ AdapterFactory for URL-based routing (100% coverage)
+- ✅ 57 unit tests + 21 integration tests (all passing)
+- ✅ Documentation: setup, authentication, cost management
+- ✅ 10 production-ready BigQuery alert examples
+
+See: [docs/sprints/phase-1/week-3/sprint-3.2-completion.md](docs/sprints/phase-1/week-3/sprint-3.2-completion.md)
 
 ### Sprint 3.1 - Automated Scheduling & Daemon ✅
 **Completed:** 2025-10-20

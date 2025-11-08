@@ -74,7 +74,7 @@ USER sqlsentinel
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)"
+    CMD python -m sqlsentinel.cli healthcheck /app/config/alerts.yaml --state-db sqlite:////app/state/state.db || exit 1
 
 # Default entrypoint: SQL Sentinel CLI
 ENTRYPOINT ["python", "-m", "sqlsentinel.cli"]

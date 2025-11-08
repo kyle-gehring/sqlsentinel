@@ -1,0 +1,35 @@
+# Development docker-compose configuration
+# Usage: docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml up
+
+version: '3.8'
+
+services:
+  sqlsentinel:
+    # Override image to use local build
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime  # Use runtime stage from Dockerfile
+    image: sqlsentinel:dev
+
+    # Development-specific environment
+    environment:
+      - LOG_LEVEL=DEBUG
+      - LOG_FORMAT=text  # Human-readable logs for development
+
+    # Mount source code for development (if needed for debugging)
+    volumes:
+      # Override with development alert config
+      - ./examples/alerts.yaml:/app/config/alerts.yaml:ro
+      - ./examples:/app/examples:ro
+
+      # Development state/logs (not persisted between runs)
+      - ./dev-state:/app/state
+      - ./dev-logs:/app/logs
+
+    # Development command (can be overridden)
+    # command: ["daemon", "/app/config/alerts.yaml", "--reload", "--log-level", "DEBUG"]
+
+    # Expose additional ports for debugging if needed
+    # ports:
+    #   - "8080:8080"  # For future HTTP endpoints

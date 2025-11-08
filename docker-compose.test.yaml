@@ -1,0 +1,54 @@
+# Testing docker-compose configuration with local PostgreSQL database
+# Usage: docker-compose -f docker-compose.yaml -f docker-compose.test.yaml up
+
+version: '3.8'
+
+services:
+  sqlsentinel:
+    # Wait for postgres to be ready
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    # Test environment variables
+    environment:
+      - DATABASE_URL=postgresql://testuser:testpass@postgres:5432/testdb
+      - LOG_LEVEL=DEBUG
+      - LOG_FORMAT=text
+
+    # Use test configuration
+    volumes:
+      - ./examples/alerts.yaml:/app/config/alerts.yaml:ro
+      - ./test-state:/app/state
+      - ./test-logs:/app/logs
+
+  # PostgreSQL database for testing
+  postgres:
+    image: postgres:15-alpine
+    container_name: sqlsentinel-postgres-test
+    restart: unless-stopped
+
+    environment:
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpass
+
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+
+    networks:
+      - sqlsentinel-network
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+    # Expose PostgreSQL port for external access (optional)
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres-test-data:
+    driver: local

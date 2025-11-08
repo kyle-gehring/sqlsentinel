@@ -7,6 +7,7 @@ from typing import Optional
 from sqlalchemy.engine import Engine
 
 from ..database.adapter import DatabaseAdapter
+from ..metrics import get_metrics
 from ..models.alert import AlertConfig, ExecutionResult, QueryResult
 from ..models.errors import ExecutionError, NotificationError
 from ..notifications.factory import NotificationFactory
@@ -135,6 +136,20 @@ class AlertExecutor:
             exec_status = "failure"  # Alert condition met = failure state
         else:
             exec_status = "success"
+
+        # Record metrics
+        try:
+            metrics = get_metrics()
+            # Record alert execution metric
+            metric_status = "error" if error_message else (query_result.status if query_result else "error")
+            metrics.record_alert_execution(
+                alert_name=alert.name,
+                status=metric_status,
+                duration_ms=duration_ms,
+            )
+        except Exception as e:
+            # Don't fail execution if metrics recording fails
+            pass
 
         # Return execution result
         return ExecutionResult(
