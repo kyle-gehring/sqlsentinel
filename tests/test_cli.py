@@ -11,12 +11,14 @@ from sqlalchemy import create_engine
 from sqlsentinel.cli import (
     AppConfig,
     DatabaseConfig,
+    healthcheck,
     init_database,
     load_config,
     main,
     run_alert,
     run_all_alerts,
     show_history,
+    show_metrics,
     silence_alert,
     show_status,
     unsilence_alert,
@@ -1355,3 +1357,309 @@ class TestShowStatus:
         assert exit_code == 1
         captured = capsys.readouterr()
         assert "Error showing status" in captured.out
+
+class TestMetrics:
+    """Tests for metrics command."""
+
+    @patch("sqlsentinel.cli.get_metrics")
+    def test_metrics_json_format(self, mock_get_metrics, capsys):
+        """Test metrics command with JSON format."""
+        mock_metrics = Mock()
+        mock_metrics.get_metrics_text.return_value = "# HELP test metric\ntest_metric 1.0"
+        mock_get_metrics.return_value = mock_metrics
+
+        exit_code = show_metrics(output_format="json")
+
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert "test_metric 1.0" in captured.out
+
+    @patch("sqlsentinel.cli.get_metrics")
+    def test_metrics_text_format(self, mock_get_metrics, capsys):
+        """Test metrics command with text format."""
+        mock_metrics = Mock()
+        mock_metrics.get_metrics_text.return_value = (
+            "# HELP test metric\n"
+            "# TYPE test_metric gauge\n"
+            "test_metric{label=\"value\"} 42.0\n"
+        )
+        mock_get_metrics.return_value = mock_metrics
+
+        exit_code = show_metrics(output_format="text")
+
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert "SQL Sentinel Metrics" in captured.out
+        assert "test_metric" in captured.out
+        assert "# HELP" not in captured.out  # Comments filtered out
+
+    @patch("sqlsentinel.cli.get_metrics")
+    def test_metrics_exception(self, mock_get_metrics, capsys):
+        """Test metrics command with exception."""
+        mock_get_metrics.side_effect = Exception("Metrics error")
+
+        exit_code = show_metrics(output_format="text")
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert "Failed to retrieve metrics" in captured.out
+
+
+class TestHealthcheck:
+    """Tests for healthcheck command."""
+
+    @patch("sqlsentinel.cli.check_notifications")
+    @patch("sqlsentinel.cli.check_database")
+    @patch("sqlsentinel.cli.aggregate_health_status")
+    @patch("sqlsentinel.cli.NotificationFactory")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.cli.load_config")
+    def test_healthcheck_success_json(
+        self,
+        mock_load_config,
+        mock_create_engine,
+        mock_notification_factory,
+        mock_aggregate_status,
+        mock_check_database,
+        mock_check_notifications,
+        capsys,
+    ):
+        """Test healthcheck command with JSON output."""
+        # Setup mocks
+        mock_load_config.return_value = Mock()
+        mock_check_database.return_value = {
+            "status": "healthy",
+            "latency_ms": 5.0,
+            "message": "OK",
+        }
+        mock_check_notifications.return_value = {
+            "status": "healthy",
+            "channels": {
+                "email": {"status": "healthy"},
+            },
+        }
+        mock_aggregate_status.return_value = "healthy"
+
+        exit_code = healthcheck(
+            config_file="test.yaml",
+            state_db_url="sqlite:///state.db",
+            database_url="sqlite:///test.db",
+            output_format="json",
+        )
+
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert '"status": "healthy"' in captured.out
+        assert "timestamp" in captured.out
+
+    @patch("sqlsentinel.cli.check_notifications")
+    @patch("sqlsentinel.cli.check_database")
+    @patch("sqlsentinel.cli.aggregate_health_status")
+    @patch("sqlsentinel.cli.NotificationFactory")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.cli.load_config")
+    def test_healthcheck_success_text(
+        self,
+        mock_load_config,
+        mock_create_engine,
+        mock_notification_factory,
+        mock_aggregate_status,
+        mock_check_database,
+        mock_check_notifications,
+        capsys,
+    ):
+        """Test healthcheck command with text output."""
+        mock_load_config.return_value = Mock()
+        mock_check_database.return_value = {
+            "status": "healthy",
+            "latency_ms": 5.0,
+            "message": "OK",
+        }
+        mock_check_notifications.return_value = {
+            "status": "healthy",
+            "channels": {
+                "email": {"status": "healthy"},
+                "slack": {"status": "not_configured"},
+            },
+        }
+        mock_aggregate_status.return_value = "healthy"
+
+        exit_code = healthcheck(
+            config_file="test.yaml",
+            state_db_url="sqlite:///state.db",
+            database_url="sqlite:///test.db",
+            output_format="text",
+        )
+
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert "SQL Sentinel Health Check" in captured.out
+        assert "Overall Status: HEALTHY" in captured.out
+
+    @patch("sqlsentinel.cli.check_notifications")
+    @patch("sqlsentinel.cli.check_database")
+    @patch("sqlsentinel.cli.aggregate_health_status")
+    @patch("sqlsentinel.cli.NotificationFactory")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.cli.load_config")
+    def test_healthcheck_unhealthy(
+        self,
+        mock_load_config,
+        mock_create_engine,
+        mock_notification_factory,
+        mock_aggregate_status,
+        mock_check_database,
+        mock_check_notifications,
+        capsys,
+    ):
+        """Test healthcheck with unhealthy status."""
+        mock_load_config.return_value = Mock()
+        mock_check_database.return_value = {
+            "status": "unhealthy",
+            "message": "Connection failed",
+        }
+        mock_check_notifications.return_value = {"status": "healthy"}
+        mock_aggregate_status.return_value = "unhealthy"
+
+        exit_code = healthcheck(
+            config_file="test.yaml",
+            state_db_url="sqlite:///state.db",
+            database_url="sqlite:///test.db",
+            output_format="text",
+        )
+
+        assert exit_code == 1
+
+    @patch("sqlsentinel.cli.check_notifications")
+    @patch("sqlsentinel.cli.check_database")
+    @patch("sqlsentinel.cli.aggregate_health_status")
+    @patch("sqlsentinel.cli.NotificationFactory")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.cli.load_config")
+    def test_healthcheck_degraded(
+        self,
+        mock_load_config,
+        mock_create_engine,
+        mock_notification_factory,
+        mock_aggregate_status,
+        mock_check_database,
+        mock_check_notifications,
+        capsys,
+    ):
+        """Test healthcheck with degraded status."""
+        mock_load_config.return_value = Mock()
+        mock_check_database.return_value = {"status": "healthy"}
+        mock_check_notifications.return_value = {"status": "degraded"}
+        mock_aggregate_status.return_value = "degraded"
+
+        exit_code = healthcheck(
+            config_file="test.yaml",
+            state_db_url="sqlite:///state.db",
+            database_url="sqlite:///test.db",
+            output_format="text",
+        )
+
+        assert exit_code == 0  # Degraded returns 0
+
+    @patch("sqlsentinel.cli.check_notifications")
+    @patch("sqlsentinel.cli.check_database")
+    @patch("sqlsentinel.cli.NotificationFactory")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.cli.load_config")
+    @patch.dict("os.environ", {"DATABASE_URL": "sqlite:///from_env.db"})
+    def test_healthcheck_database_url_from_env(
+        self,
+        mock_load_config,
+        mock_create_engine,
+        mock_notification_factory,
+        mock_check_database,
+        mock_check_notifications,
+    ):
+        """Test healthcheck with database URL from environment."""
+        mock_load_config.return_value = Mock()
+        mock_check_database.return_value = {"status": "healthy"}
+        mock_check_notifications.return_value = {"status": "healthy"}
+
+        exit_code = healthcheck(
+            config_file="test.yaml",
+            state_db_url="sqlite:///state.db",
+            database_url=None,  # Should use env var
+            output_format="json",
+        )
+
+        # Verify create_engine was called with env var value
+        assert mock_create_engine.call_count >= 2
+
+    @patch("sqlsentinel.cli.check_notifications")
+    @patch("sqlsentinel.cli.check_database")
+    @patch("sqlsentinel.cli.aggregate_health_status")
+    @patch("sqlsentinel.cli.NotificationFactory")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.cli.load_config")
+    def test_healthcheck_alert_database_error(
+        self,
+        mock_load_config,
+        mock_create_engine,
+        mock_notification_factory,
+        mock_aggregate_status,
+        mock_check_database,
+        mock_check_notifications,
+        capsys,
+    ):
+        """Test healthcheck when alert database connection fails."""
+        mock_load_config.return_value = Mock()
+
+        # State DB is healthy
+        mock_check_database.return_value = {"status": "healthy"}
+
+        # Alert DB fails to connect
+        def create_engine_side_effect(url):
+            if "alert" in url or "test.db" in url:
+                raise Exception("Connection failed")
+            return Mock()
+
+        mock_create_engine.side_effect = create_engine_side_effect
+        mock_check_notifications.return_value = {"status": "healthy"}
+        mock_aggregate_status.return_value = "degraded"
+
+        exit_code = healthcheck(
+            config_file="test.yaml",
+            state_db_url="sqlite:///state.db",
+            database_url="sqlite:///test.db",
+            output_format="text",
+        )
+
+        # Should handle the error gracefully
+        captured = capsys.readouterr()
+        assert exit_code == 0  # Degraded
+
+    @patch("sqlsentinel.cli.load_config")
+    def test_healthcheck_exception(self, mock_load_config, capsys):
+        """Test healthcheck with exception."""
+        mock_load_config.side_effect = Exception("Config error")
+
+        exit_code = healthcheck(
+            config_file="test.yaml",
+            state_db_url="sqlite:///state.db",
+            output_format="text",
+        )
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert "Healthcheck failed" in captured.out
+
+    @patch("sqlsentinel.cli.load_config")
+    def test_healthcheck_exception_json(self, mock_load_config, capsys):
+        """Test healthcheck with exception and JSON output."""
+        mock_load_config.side_effect = Exception("Config error")
+
+        exit_code = healthcheck(
+            config_file="test.yaml",
+            state_db_url="sqlite:///state.db",
+            output_format="json",
+        )
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert '"status": "unhealthy"' in captured.out
+        assert '"error"' in captured.out

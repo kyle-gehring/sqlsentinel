@@ -4,7 +4,7 @@ import logging
 import time
 from typing import Any
 
-from prometheus_client import Counter, Gauge, Histogram, generate_latest
+from prometheus_client import Counter, Gauge, Histogram, generate_latest, CollectorRegistry, REGISTRY
 
 logger = logging.getLogger(__name__)
 
@@ -12,13 +12,20 @@ logger = logging.getLogger(__name__)
 class MetricsCollector:
     """Centralized metrics collection using prometheus-client."""
 
-    def __init__(self) -> None:
-        """Initialize metrics collector with Prometheus metrics."""
+    def __init__(self, registry: CollectorRegistry | None = None) -> None:
+        """Initialize metrics collector with Prometheus metrics.
+
+        Args:
+            registry: Optional Prometheus registry to use. Defaults to global REGISTRY.
+        """
+        self.registry = registry or REGISTRY
+
         # Alert execution metrics
         self.alerts_total = Counter(
             "sqlsentinel_alerts_total",
             "Total number of alert executions",
             ["alert_name", "status"],
+            registry=self.registry,
         )
 
         self.alert_duration_seconds = Histogram(
@@ -26,6 +33,7 @@ class MetricsCollector:
             "Alert execution duration in seconds",
             ["alert_name"],
             buckets=(0.1, 0.5, 1.0, 2.5, 5.0, 10.0),
+            registry=self.registry,
         )
 
         # Notification metrics
@@ -33,6 +41,7 @@ class MetricsCollector:
             "sqlsentinel_notifications_total",
             "Total notifications sent",
             ["channel", "status"],
+            registry=self.registry,
         )
 
         self.notification_duration_seconds = Histogram(
@@ -40,24 +49,28 @@ class MetricsCollector:
             "Notification delivery duration in seconds",
             ["channel"],
             buckets=(0.1, 0.5, 1.0, 2.5, 5.0),
+            registry=self.registry,
         )
 
         # Scheduler metrics
         self.scheduler_jobs = Gauge(
             "sqlsentinel_scheduler_jobs",
             "Current number of scheduled jobs",
+            registry=self.registry,
         )
 
         self.scheduler_job_runs_total = Counter(
             "sqlsentinel_scheduler_job_runs_total",
             "Total number of scheduled job runs",
             ["alert_name"],
+            registry=self.registry,
         )
 
         # System metrics
         self.uptime_seconds = Gauge(
             "sqlsentinel_uptime_seconds",
             "Application uptime in seconds",
+            registry=self.registry,
         )
 
         self.start_time = time.time()
@@ -140,7 +153,7 @@ class MetricsCollector:
             Prometheus format text representation of all metrics
         """
         self.update_uptime()
-        return generate_latest().decode("utf-8")
+        return generate_latest(self.registry).decode("utf-8")
 
     def get_metrics_dict(self) -> dict[str, Any]:
         """Get metrics as a dictionary (simplified view).
@@ -171,6 +184,25 @@ def get_metrics() -> MetricsCollector:
 
 
 def reset_metrics() -> None:
-    """Reset the global metrics instance (for testing)."""
+    """Reset the global metrics instance (for testing).
+
+    This function also unregisters all SQL Sentinel metrics from the global
+    Prometheus registry to avoid duplicate registration errors in tests.
+    """
     global _metrics_instance
+
+    # If there's an existing instance with custom registry, we need to clean it up
+    if _metrics_instance is not None and _metrics_instance.registry is REGISTRY:
+        # Unregister all sqlsentinel metrics from the global registry
+        collectors = list(REGISTRY._collector_to_names.keys())
+        for collector in collectors:
+            try:
+                # Get collector names
+                names = REGISTRY._collector_to_names.get(collector, set())
+                # Only unregister sqlsentinel metrics
+                if any("sqlsentinel" in str(name) for name in names):
+                    REGISTRY.unregister(collector)
+            except Exception:
+                pass
+
     _metrics_instance = None
