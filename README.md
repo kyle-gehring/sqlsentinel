@@ -308,4 +308,145 @@ MIT License for maximum adoption
 
 ## Getting Started Guide
 
-TODO
+### Prerequisites
+
+- Python 3.11 or higher
+- Access to a SQL database (PostgreSQL, MySQL, BigQuery, etc.)
+- SMTP server for email notifications (optional)
+
+### Installation
+
+#### Option 1: Using pip (recommended)
+
+```bash
+pip install sqlsentinel
+```
+
+#### Option 2: From source
+
+```bash
+git clone https://github.com/sqlsentinel/sqlsentinel.git
+cd sqlsentinel
+pip install -e .
+```
+
+### Quick Start (5 minutes)
+
+#### 1. Create a configuration file
+
+Create `alerts.yaml`:
+
+```yaml
+database:
+  url: "postgresql://user:pass@localhost/mydb"  # Or use DATABASE_URL env var
+
+alerts:
+  - name: "Daily Revenue Check"
+    description: "Alert if yesterday's revenue is below $10,000"
+    query: |
+      SELECT
+        CASE WHEN SUM(revenue) < 10000 THEN 'ALERT' ELSE 'OK' END as status,
+        SUM(revenue) as actual_value,
+        10000 as threshold
+      FROM orders
+      WHERE order_date = CURRENT_DATE - 1
+    schedule: "0 9 * * *"  # Every day at 9 AM
+    notify:
+      - channel: email
+        recipients: ["team@company.com"]
+```
+
+#### 2. Set up email notifications (optional)
+
+Set environment variables:
+
+```bash
+export SMTP_HOST="smtp.gmail.com"
+export SMTP_PORT="587"
+export SMTP_USER="your-email@gmail.com"
+export SMTP_PASSWORD="your-app-password"
+export SMTP_FROM="alerts@company.com"
+```
+
+#### 3. Initialize the state database
+
+```bash
+sqlsentinel init-db --state-db-url sqlite:///state.db
+```
+
+#### 4. Validate your configuration
+
+```bash
+sqlsentinel validate alerts.yaml
+```
+
+#### 5. Run an alert manually (test)
+
+```bash
+sqlsentinel run-alert alerts.yaml "Daily Revenue Check"
+```
+
+#### 6. Run all alerts (dry-run mode)
+
+```bash
+sqlsentinel run-all alerts.yaml --dry-run
+```
+
+#### 7. Start the daemon (production)
+
+```bash
+sqlsentinel daemon alerts.yaml --state-db-url sqlite:///state.db
+```
+
+The daemon will run continuously and execute alerts according to their schedules.
+
+### Essential Commands
+
+```bash
+# Validate configuration
+sqlsentinel validate alerts.yaml
+
+# Run a single alert
+sqlsentinel run-alert alerts.yaml "Alert Name"
+
+# Run all alerts once
+sqlsentinel run-all alerts.yaml
+
+# Show alert history
+sqlsentinel history --state-db-url sqlite:///state.db
+
+# Check system health
+sqlsentinel healthcheck alerts.yaml
+
+# View metrics
+sqlsentinel metrics
+
+# Silence an alert for 1 hour
+sqlsentinel silence alerts.yaml "Alert Name" --duration 3600
+
+# Start the daemon
+sqlsentinel daemon alerts.yaml
+```
+
+### Docker Deployment
+
+```bash
+# Pull the image
+docker pull sqlsentinel/sqlsentinel:latest
+
+# Run with configuration file
+docker run -d \
+  -v $(pwd)/alerts.yaml:/config/alerts.yaml \
+  -e DATABASE_URL="postgresql://user:pass@host/db" \
+  -e SMTP_HOST="smtp.gmail.com" \
+  -e SMTP_USER="your-email@gmail.com" \
+  -e SMTP_PASSWORD="your-password" \
+  sqlsentinel/sqlsentinel:latest
+```
+
+### Next Steps
+
+- Read the [Alert Configuration Guide](docs/configuration.md) for advanced options
+- Set up [Slack notifications](docs/notifications.md#slack)
+- Configure [multiple databases](docs/databases.md)
+- Review [best practices](docs/best-practices.md)
