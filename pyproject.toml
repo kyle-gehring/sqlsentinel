@@ -18,6 +18,9 @@ classifiers = [
 ]
 packages = [{include = "sqlsentinel", from = "src"}]
 
+[tool.poetry.scripts]
+sqlsentinel = "sqlsentinel.cli:main"
+
 [tool.poetry.dependencies]
 python = "^3.11"
 pydantic = "^2.0"
