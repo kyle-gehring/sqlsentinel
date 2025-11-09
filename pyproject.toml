@@ -40,6 +40,10 @@ mypy = "^1.7"
 ruff = "^0.1"
 pre-commit = "^3.6"
 types-pyyaml = "^6.0"
+# Security scanning tools
+safety = "^3.0"
+pip-audit = "^2.6"
+bandit = "^1.7"
 
 [build-system]
 requires = ["poetry-core"]
