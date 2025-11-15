@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "sql-sentinel"
+name = "sqlsentinel"
 version = "0.1.0"
 description = "SQL-first alerting system for data analysts"
 authors = ["SQL Sentinel Contributors"]
