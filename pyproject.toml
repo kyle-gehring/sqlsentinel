@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "sqlsentinel"
+name = "sql-sentinel"
 version = "0.1.0"
 description = "SQL-first alerting system for data analysts"
 authors = ["SQL Sentinel Contributors"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/sqlsentinel/sqlsentinel"
-repository = "https://github.com/sqlsentinel/sqlsentinel"
+homepage = "https://github.com/kyle-gehring/sql-sentinel"
+repository = "https://github.com/kyle-gehring/sql-sentinel"
 keywords = ["sql", "alerting", "monitoring", "data-quality"]
 classifiers = [
     "Development Status :: 3 - Alpha",
