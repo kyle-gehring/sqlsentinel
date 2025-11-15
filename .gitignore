@@ -76,3 +76,4 @@ logs/
 # Service account keys and secrets
 .secrets/
 .gcp/
+connections.yml
