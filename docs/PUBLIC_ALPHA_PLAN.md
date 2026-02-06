@@ -390,6 +390,245 @@ test -f LICENSE && echo "✓ License exists"
 
 ---
 
+### Step 0.8: Repository Cleanup Audit (30 mins)
+
+**CRITICAL: Review all repository contents before going public!**
+
+**Systematic file review:**
+
+```bash
+cd /workspace
+
+# Generate file inventory
+echo "=== ROOT LEVEL FILES ==="
+ls -la *.md *.sh *.txt 2>/dev/null
+
+echo -e "\n=== DOCS DIRECTORY ==="
+find docs/ -type f -name "*.md" | sort
+
+echo -e "\n=== SCRIPTS DIRECTORY ==="
+ls -la scripts/
+
+echo -e "\n=== CONFIG FILES ==="
+ls -la *.yaml *.yml *.toml *.json 2>/dev/null | grep -v poetry.lock
+
+echo -e "\n=== HIDDEN FILES ==="
+ls -la .* 2>/dev/null | grep -v "^\."
+```
+
+#### Files to Review/Action
+
+**Root Level Markdown Files:**
+
+1. **API_SPECIFICATION.md**
+   - [ ] Review: Is this current or deprecated?
+   - [ ] Action: Move to `docs/archive/specs/` if deprecated, or to `docs/api/` if current
+   - [ ] Decision: _[Archive/Keep/Move]_
+
+2. **BIGQUERY_SETUP.md**
+   - [ ] Review: Covered by docs/guides/bigquery-setup.md?
+   - [ ] Action: Archive if duplicate, or merge into main docs
+   - [ ] Decision: _[Archive/Merge/Keep]_
+
+3. **SECURITY_PERFORMANCE_VALIDATION.md**
+   - [ ] Review: Is this from early development?
+   - [ ] Action: Archive if historical, or move to docs/testing/
+   - [ ] Decision: _[Archive/Move/Delete]_
+
+4. **TECHNICAL_SPEC.md**
+   - [ ] Review: Current or superseded by README?
+   - [ ] Action: Archive if historical, or move to docs/architecture/
+   - [ ] Decision: _[Archive/Move/Keep]_
+
+5. **SPRINT.md**
+   - [ ] Review: Internal project tracking
+   - [ ] Action: Keep (shows development progress) or move to docs/project/
+   - [ ] Decision: _[Keep/Move]_
+
+6. **CLAUDE.md**
+   - [ ] Review: Internal instructions for Claude Code
+   - [ ] Action: Keep (useful for AI-assisted development)
+   - [ ] Decision: _[Keep]_ ✅
+
+7. **README.md**
+   - [ ] Review: Public-facing documentation
+   - [ ] Action: Keep
+   - [ ] Decision: _[Keep]_ ✅
+
+**Scripts:**
+
+8. **test_bigquery.sh** (root level)
+   - [ ] Review: Temporary test script?
+   - [ ] Action: Delete if temporary, or move to scripts/
+   - [ ] Decision: _[Delete/Move]_
+
+9. **scripts/** directory
+   - [ ] docker-build.sh - Keep ✅
+   - [ ] docker-test.sh - Keep ✅
+   - [ ] validate-health.sh - Keep ✅
+   - [ ] Any other scripts? Review and decide
+
+**Docs Directory:**
+
+10. **docs/archive/deprecated-plans/**
+    - [ ] Review: Properly archived with README?
+    - [ ] Action: Verify README.md explains why archived
+    - [ ] Decision: _[Keep as-is]_ ✅
+
+11. **docs/sprints/**
+    - [ ] Review: Historical sprint completion reports
+    - [ ] Action: Keep (shows project evolution) or move to archive
+    - [ ] Decision: _[Keep/Archive]_
+
+12. **docs/guides/, docs/api/, docs/deployment/**
+    - [ ] Review: All current and accurate?
+    - [ ] Action: Verify no WIP or draft documents
+    - [ ] Decision: _[Review each]_
+
+**Sensitive Information Check:**
+
+```bash
+# Check for potential secrets or credentials
+cd /workspace
+
+# Check for common secret patterns
+echo "Checking for potential secrets..."
+grep -r -i "password\|secret\|api[_-]key\|token" \
+  --include="*.md" --include="*.yaml" --include="*.sh" \
+  --exclude-dir=".git" --exclude-dir="node_modules" \
+  . 2>/dev/null | grep -v "placeholder\|example\|CHANGEME\|your-" || echo "No secrets found"
+
+# Check for private email addresses (not example.com)
+grep -r -E "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" \
+  --include="*.md" --include="*.yaml" \
+  --exclude-dir=".git" \
+  . 2>/dev/null | grep -v "example.com\|test@\|noreply@" || echo "No private emails"
+
+# Check for absolute paths that might be machine-specific
+grep -r "/Users/\|/home/[^e]" \
+  --include="*.md" --include="*.yaml" --include="*.sh" \
+  --exclude-dir=".git" \
+  . 2>/dev/null | head -5 || echo "No absolute paths"
+```
+
+**Temporary Files Check:**
+
+```bash
+# Check for common temporary file patterns
+find /workspace -type f \( \
+  -name "*.tmp" -o \
+  -name "*.bak" -o \
+  -name "*.swp" -o \
+  -name "*~" -o \
+  -name ".DS_Store" -o \
+  -name "Thumbs.db" \
+\) 2>/dev/null
+```
+
+**Git Ignored Files Review:**
+
+```bash
+# Check what's being ignored
+cat .gitignore
+
+# Verify no important files are ignored
+git status --ignored
+```
+
+#### Cleanup Actions
+
+**Create archive structure if needed:**
+```bash
+mkdir -p docs/archive/specs
+mkdir -p docs/archive/early-docs
+mkdir -p docs/project
+```
+
+**Move deprecated files:**
+```bash
+# Example moves (adjust based on review):
+# git mv API_SPECIFICATION.md docs/archive/specs/
+# git mv SECURITY_PERFORMANCE_VALIDATION.md docs/archive/early-docs/
+# git mv TECHNICAL_SPEC.md docs/archive/specs/
+# git mv SPRINT.md docs/project/
+```
+
+**Delete temporary files:**
+```bash
+# Example deletions:
+# rm test_bigquery.sh
+# find . -name "*.tmp" -delete
+```
+
+**Create archive README if moving files:**
+```bash
+cat > docs/archive/early-docs/README.md << 'EOF'
+# Early Development Documentation
+
+This directory contains documentation from early development phases,
+preserved for historical reference.
+
+These documents are **not current** but show the evolution of the project.
+
+## Contents
+
+- SECURITY_PERFORMANCE_VALIDATION.md - Early security/performance notes (superseded by security scans)
+- [Add others as moved]
+
+**Current Documentation:** See /docs/ directory
+EOF
+```
+
+#### Final Checklist
+
+**Repository cleanliness:**
+- [ ] No deprecated docs in root directory
+- [ ] All archived files have explanatory READMEs
+- [ ] No temporary/test scripts in root
+- [ ] No sensitive information (credentials, private emails, API keys)
+- [ ] No machine-specific absolute paths
+- [ ] No .DS_Store, *.tmp, *.bak files
+- [ ] .gitignore is appropriate
+- [ ] All sprint docs either moved to docs/project/ or kept with explanation
+- [ ] Spec docs moved to docs/archive/specs/ or docs/architecture/
+
+**Public readiness:**
+- [ ] Root directory clean and professional
+- [ ] Only public-facing docs in root (README, CLAUDE.md, LICENSE)
+- [ ] All internal docs in docs/ or docs/project/
+- [ ] Archive structure clear and documented
+- [ ] Nothing embarrassing or confusing for external viewers
+
+**Documentation organization:**
+```
+/workspace/
+├── README.md                    ✅ Public-facing
+├── LICENSE                      ✅ Public-facing
+├── CLAUDE.md                    ✅ AI development (keep)
+├── pyproject.toml              ✅ Package config
+├── Dockerfile                  ✅ Deployment
+├── docker-compose*.yaml        ✅ Deployment
+│
+├── src/sqlsentinel/            ✅ Source code
+├── tests/                      ✅ Test suite
+├── examples/                   ✅ User examples
+├── scripts/                    ✅ Operational scripts
+│
+└── docs/
+    ├── PUBLIC_ALPHA_PLAN.md    ✅ Current plan
+    ├── guides/                 ✅ User guides
+    ├── api/                    ✅ API reference
+    ├── deployment/             ✅ Deployment docs
+    ├── operations/             ✅ Ops docs
+    ├── project/                ✅ Project tracking (SPRINT.md)
+    └── archive/
+        ├── deprecated-plans/   ✅ Old roadmaps
+        ├── specs/              ✅ Old specifications
+        └── early-docs/         ✅ Historical docs
+```
+
+---
+
 ## Day 0 Summary & Sign-Off
 
 ### Issues Found
@@ -413,6 +652,9 @@ test -f LICENSE && echo "✓ License exists"
 - [ ] Examples validate successfully
 - [ ] Docker image builds and runs
 - [ ] Documentation is accurate
+- [ ] **Repository cleanup complete** (no deprecated files in root)
+- [ ] **No sensitive information** (credentials, private emails, API keys)
+- [ ] **No temporary files** (.tmp, .bak, .DS_Store)
 - [ ] No critical bugs found
 - [ ] All issues documented and resolved/deferred
 
