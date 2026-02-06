@@ -6,27 +6,68 @@ See [Sprint History](#completed-sprints) below for details.
 
 ---
 
-# Next: Phase 2 Planning
+# Next: Public Alpha Release (v0.1.0)
+
+**Strategic Pivot:** Instead of building a Web UI (original Phase 2 plan), SQL Sentinel is taking an **AI-first approach** that leverages Claude Code and other AI coding assistants as the primary user interface.
+
+## Phase 1 Achievements
 
 Phase 1 (MVP) delivered a fully functional SQL-first alerting system with:
-- ✅ 92.90% test coverage
+- ✅ 92.90% test coverage (530 passing tests)
 - ✅ Multi-database support (SQLAlchemy + BigQuery)
 - ✅ Email, Slack, Webhook notifications
-- ✅ Cron-based scheduling
+- ✅ Cron-based scheduling with daemon mode
 - ✅ Docker deployment ready
-- ✅ Security validated
+- ✅ Security validated (1 low-risk CVE, acceptable)
 - ✅ Comprehensive documentation
+- ✅ Production-ready code quality
 
-**Phase 2** will focus on:
-- Web UI for configuration management
-- Alert analytics dashboard
-- Additional notification channels
-- Performance optimization
-- Terraform/Helm deployment
+## Public Alpha Release Plan (v0.1.0)
 
-## Detailed Plan
+**Timeline:** 3 days
+**Target Date:** 2025-02-08
 
-See: [docs/sprints/phase-1/week-4/sprint-4.2-plan.md](docs/sprints/phase-1/week-4/sprint-4.2-plan.md) for complete implementation plan
+**Goals:**
+1. **Public GitHub Repository** - Open source with CI/CD pipeline
+2. **PyPI Package** - `pip install sqlsentinel` works globally
+3. **Docker Hub Images** - `docker pull sqlsentinel/sqlsentinel` works
+4. **AI-First Documentation** - Enable Claude Code workflows without complex MCP server
+5. **Professional Appearance** - Shows well to potential employers and users
+
+**See:** [docs/PUBLIC_ALPHA_PLAN.md](docs/PUBLIC_ALPHA_PLAN.md) for complete 3-day execution plan
+
+## Why AI-First Instead of Web UI?
+
+**Rationale:**
+- AI assistants like Claude Code can generate SQL queries naturally
+- Eliminates 4+ weeks of React/FastAPI development
+- More accessible (natural language > forms)
+- Differentiates SQL Sentinel from competitors
+- Shows cutting-edge AI integration skills
+
+**Approach:**
+- Focus on **excellent documentation** that enables AI-assisted workflows
+- Let Claude Code handle SQL generation (it already does this well)
+- Optional minimal MCP server for installation/setup tasks only
+- Analysts use their SQL skills for alert logic (their strength)
+
+## Scope Changes
+
+**Eliminated from Original Roadmap:**
+- ❌ React Web UI (Sprints 9-12)
+- ❌ FastAPI REST API (Sprint 9.1)
+- ❌ Multi-cloud Terraform for AWS/Azure (Sprints 5-7)
+- ❌ Enterprise features (SSO, RBAC, multi-tenancy)
+
+**Replaced With:**
+- ✅ PyPI + Docker Hub publishing
+- ✅ GitHub repository with CI/CD
+- ✅ AI-optimized documentation
+- ✅ Optional minimal MCP server (installation/setup only)
+
+**Archived Plans:**
+- Original 12-week roadmap: [docs/archive/deprecated-plans/IMPLEMENTATION_ROADMAP.md](docs/archive/deprecated-plans/IMPLEMENTATION_ROADMAP.md)
+- 7-day AI-first plan: [docs/archive/deprecated-plans/AI_FIRST_ROADMAP.md](docs/archive/deprecated-plans/AI_FIRST_ROADMAP.md)
 
 ---
 
@@ -155,3 +196,27 @@ See: [docs/sprints/sprint-1.2-completion.md](docs/sprints/sprint-1.2-completion.
 **Tests:** 37 passing
 
 See: [docs/sprints/sprint-1.1-completion.md](docs/sprints/sprint-1.1-completion.md)
+
+---
+
+## What's Next?
+
+**Immediate:** Execute [Public Alpha Release Plan](docs/PUBLIC_ALPHA_PLAN.md) (3 days)
+
+**After v0.1.0:**
+- Gather user feedback
+- Iterate based on actual usage
+- Consider minimal MCP server (optional)
+- Plan v0.2.0 features based on community requests
+
+**Success Metrics (Week 1):**
+- 5+ GitHub stars
+- 10+ PyPI downloads
+- 3+ Docker pulls
+- 1+ external user question/issue
+- Professional appearance for portfolio
+
+---
+
+**Last Updated:** 2025-02-05
+**Current Status:** Phase 1 Complete ✅ | Public Alpha Planning 📋
