@@ -1,14 +1,14 @@
-# SQL Sentinel v0.1.0 Public Alpha - 3 Day Plan
+# SQL Sentinel v0.1.0 Public Alpha - 4 Day Plan
 
 **Version:** 0.1.0
-**Target Date:** 2025-02-08 (3 days from now)
+**Target Date:** 2025-02-09 (4 days from now)
 **Status:** In Planning
 
 ---
 
 ## Executive Summary
 
-Ship a **production-ready public alpha** in 3 days focused on:
+Ship a **production-ready public alpha** in 4 days (Day 0 validation + 3 days execution) focused on:
 - ✅ PyPI package (`pip install sqlsentinel`)
 - ✅ Docker Hub images (`docker pull sqlsentinel/sqlsentinel`)
 - ✅ GitHub repository with CI/CD
@@ -25,6 +25,404 @@ Ship a **production-ready public alpha** in 3 days focused on:
 - Package name: `sqlsentinel`
 - Status: **AVAILABLE** ✅
 - Verified: 2025-02-05
+
+---
+
+## Day 0: Pre-Launch Validation (CRITICAL!)
+
+**Before making anything public, validate that SQL Sentinel actually works end-to-end.**
+
+### Why This Matters
+
+- Catch broken features before users do
+- Verify package installation works
+- Ensure examples actually run
+- Test real database connectivity
+- Validate notifications work
+- Confirm Docker image functions
+
+### Duration: 2-3 hours
+
+---
+
+### Step 0.1: Package Build & Local Installation (30 mins)
+
+**Build the package:**
+```bash
+cd /workspace
+poetry build
+```
+
+**Expected output:**
+- `dist/sqlsentinel-0.1.0.tar.gz`
+- `dist/sqlsentinel-0.1.0-py3-none-any.whl`
+
+**Test installation in fresh environment:**
+```bash
+# Create isolated test environment
+python -m venv /tmp/test-sqlsentinel
+source /tmp/test-sqlsentinel/bin/activate
+
+# Install from wheel
+pip install dist/sqlsentinel-*.whl
+
+# Verify CLI is available
+which sqlsentinel
+sqlsentinel --version
+sqlsentinel --help
+
+# Test all subcommands exist
+sqlsentinel validate --help
+sqlsentinel run --help
+sqlsentinel daemon --help
+sqlsentinel history --help
+sqlsentinel healthcheck --help
+sqlsentinel metrics --help
+sqlsentinel silence --help
+sqlsentinel unsilence --help
+sqlsentinel status --help
+
+# Cleanup
+deactivate
+rm -rf /tmp/test-sqlsentinel
+```
+
+**Checklist:**
+- [ ] Package builds without errors
+- [ ] Wheel file created (~size check: should be < 100KB)
+- [ ] Installs in fresh virtualenv
+- [ ] `sqlsentinel` command available in PATH
+- [ ] All subcommands present and show help
+- [ ] No import errors
+- [ ] Version number correct (0.1.0)
+
+---
+
+### Step 0.2: SQLite Alert Test (30 mins)
+
+**Create test database:**
+```bash
+cd /tmp
+sqlite3 test_sales.db << 'EOF'
+CREATE TABLE sales (
+  date DATE,
+  revenue DECIMAL(10,2),
+  orders INT
+);
+
+INSERT INTO sales VALUES
+  (date('now', '-1 day'), 12500.00, 45),
+  (date('now', '-2 days'), 8500.00, 32),
+  (date('now', '-3 days'), 15000.00, 58);
+EOF
+```
+
+**Create alert config:**
+```yaml
+# /tmp/test-alerts.yaml
+database:
+  url: "sqlite:////tmp/test_sales.db"
+
+alerts:
+  - name: "daily_revenue_check"
+    description: "Test alert for revenue threshold"
+    query: |
+      SELECT
+        CASE WHEN revenue < 10000 THEN 'ALERT' ELSE 'OK' END as status,
+        revenue as actual_value,
+        10000 as threshold,
+        orders as order_count
+      FROM sales
+      WHERE date = date('now', '-1 day')
+    schedule: "*/5 * * * *"
+    notify:
+      - channel: email
+        recipients: ["test@example.com"]
+```
+
+**Test the alert:**
+```bash
+# Validate configuration
+sqlsentinel validate /tmp/test-alerts.yaml
+
+# Run alert in dry-run mode (no notifications)
+sqlsentinel run /tmp/test-alerts.yaml "daily_revenue_check" --dry-run
+
+# Initialize state database
+sqlsentinel init /tmp/test-alerts.yaml --state-db /tmp/test-state.db
+
+# Run alert with state tracking
+sqlsentinel run /tmp/test-alerts.yaml "daily_revenue_check" --state-db /tmp/test-state.db
+
+# View history
+sqlsentinel history --state-db /tmp/test-state.db
+
+# Check health
+sqlsentinel healthcheck /tmp/test-alerts.yaml --state-db /tmp/test-state.db
+
+# Cleanup
+rm -f /tmp/test-alerts.yaml /tmp/test_sales.db /tmp/test-state.db
+```
+
+**Checklist:**
+- [ ] Config validates successfully
+- [ ] Dry-run executes query and shows results
+- [ ] Alert status detected correctly (ALERT or OK)
+- [ ] State database initializes
+- [ ] Alert runs with state tracking
+- [ ] History shows execution record
+- [ ] Health check passes
+- [ ] No crashes or errors
+
+---
+
+### Step 0.3: Multi-Database Test (15 mins)
+
+**Test PostgreSQL connection (if available):**
+```bash
+# Only if you have PostgreSQL running locally or via Docker
+# Skip if not available - will be tested in production
+
+docker run -d --name postgres-test \
+  -e POSTGRES_PASSWORD=test \
+  -e POSTGRES_DB=testdb \
+  -p 5432:5432 \
+  postgres:15-alpine
+
+# Wait for startup
+sleep 5
+
+# Create test config
+cat > /tmp/pg-test.yaml << 'EOF'
+database:
+  url: "postgresql://postgres:test@localhost:5432/testdb"
+
+alerts:
+  - name: "pg_test"
+    query: "SELECT 'OK' as status, 1 as value"
+    schedule: "*/5 * * * *"
+    notify: []
+EOF
+
+# Test connection
+sqlsentinel validate /tmp/pg-test.yaml
+
+# Cleanup
+docker stop postgres-test && docker rm postgres-test
+rm /tmp/pg-test.yaml
+```
+
+**Checklist:**
+- [ ] PostgreSQL connection works (if tested)
+- [ ] Query executes successfully
+- [ ] Config validates
+- [ ] OR skip if no PostgreSQL available (acceptable)
+
+---
+
+### Step 0.4: Notification Test (15 mins)
+
+**Test email notification structure (without SMTP):**
+```bash
+# Create config with email notification
+cat > /tmp/email-test.yaml << 'EOF'
+database:
+  url: "sqlite:///:memory:"
+
+alerts:
+  - name: "email_test"
+    query: "SELECT 'ALERT' as status, 100 as actual_value, 50 as threshold"
+    schedule: "*/5 * * * *"
+    notify:
+      - channel: email
+        recipients: ["test@example.com"]
+        subject: "Test Alert: {alert_name}"
+EOF
+
+# Validate (should pass even without SMTP configured)
+sqlsentinel validate /tmp/email-test.yaml
+
+# Run in dry-run (won't actually send)
+sqlsentinel run /tmp/email-test.yaml "email_test" --dry-run
+
+rm /tmp/email-test.yaml
+```
+
+**Test webhook notification:**
+```bash
+# Start local webhook receiver (optional)
+# nc -l 8080  # Or use webhook.site
+
+cat > /tmp/webhook-test.yaml << 'EOF'
+database:
+  url: "sqlite:///:memory:"
+
+alerts:
+  - name: "webhook_test"
+    query: "SELECT 'ALERT' as status, 100 as actual_value"
+    schedule: "*/5 * * * *"
+    notify:
+      - channel: webhook
+        url: "https://webhook.site/your-unique-url"
+EOF
+
+# Validate
+sqlsentinel validate /tmp/webhook-test.yaml
+
+rm /tmp/webhook-test.yaml
+```
+
+**Checklist:**
+- [ ] Email notification config validates
+- [ ] Webhook notification config validates
+- [ ] Dry-run mode shows notification would be sent
+- [ ] No crashes when SMTP not configured (expected)
+
+---
+
+### Step 0.5: Docker Image Test (30 mins)
+
+**Build Docker image:**
+```bash
+cd /workspace
+docker build -t sqlsentinel-test:local .
+```
+
+**Test Docker image:**
+```bash
+# Test version
+docker run --rm sqlsentinel-test:local sqlsentinel --version
+
+# Test help
+docker run --rm sqlsentinel-test:local sqlsentinel --help
+
+# Test with mounted config
+docker run --rm \
+  -v /workspace/examples/alerts.yaml:/app/alerts.yaml \
+  sqlsentinel-test:local \
+  sqlsentinel validate /app/alerts.yaml
+
+# Test healthcheck
+docker run --rm \
+  -v /workspace/examples/alerts.yaml:/app/alerts.yaml \
+  sqlsentinel-test:local \
+  sqlsentinel healthcheck /app/alerts.yaml
+
+# Test metrics
+docker run --rm sqlsentinel-test:local sqlsentinel metrics
+
+# Cleanup
+docker rmi sqlsentinel-test:local
+```
+
+**Checklist:**
+- [ ] Docker image builds successfully
+- [ ] Image size reasonable (< 500MB ideally)
+- [ ] CLI commands work inside container
+- [ ] Can mount config files
+- [ ] Health check works
+- [ ] Metrics command works
+- [ ] No errors or warnings
+
+---
+
+### Step 0.6: Example Configs Validation (15 mins)
+
+**Test all example configurations:**
+```bash
+cd /workspace
+
+# Test main example
+sqlsentinel validate examples/alerts.yaml
+
+# Test multi-channel example
+sqlsentinel validate examples/alerts-multi-channel.yaml
+
+# Test BigQuery example (will fail on connection, but should validate syntax)
+sqlsentinel validate examples/bigquery-alerts.yaml 2>&1 | grep -i "validation" || echo "Syntax validation passed"
+```
+
+**Check example database:**
+```bash
+# Verify sample data exists
+ls -lh examples/sample_data.db
+sqlite3 examples/sample_data.db "SELECT COUNT(*) FROM orders;"
+```
+
+**Checklist:**
+- [ ] All example YAML files validate successfully
+- [ ] Sample database exists and has data
+- [ ] Examples are up-to-date with current schema
+- [ ] No syntax errors in any examples
+
+---
+
+### Step 0.7: Documentation Spot Check (15 mins)
+
+**Verify critical docs exist and are accurate:**
+```bash
+cd /workspace
+
+# Check README has essential sections
+grep -q "Installation" README.md && echo "✓ Installation section"
+grep -q "Quick Start" README.md && echo "✓ Quick Start section"
+grep -q "AI-First" README.md && echo "✓ AI-First section"
+
+# Check examples are referenced
+grep -q "examples/" README.md && echo "✓ Examples referenced"
+
+# Check essential docs exist
+test -f docs/deployment/docker-guide.md && echo "✓ Docker guide exists"
+test -f docs/api/health-checks.md && echo "✓ Health API docs exist"
+test -f docs/api/metrics.md && echo "✓ Metrics API docs exist"
+
+# Check LICENSE exists
+test -f LICENSE && echo "✓ License exists"
+```
+
+**Checklist:**
+- [ ] README has installation instructions
+- [ ] README has quick start (< 10 minutes)
+- [ ] README mentions AI-first approach
+- [ ] Examples are referenced in docs
+- [ ] Essential documentation exists
+- [ ] LICENSE file present (MIT)
+
+---
+
+## Day 0 Summary & Sign-Off
+
+### Issues Found
+
+**Track any issues discovered during validation:**
+
+1. **Issue:** _[Description]_
+   - **Severity:** Critical / High / Medium / Low
+   - **Fix:** _[What was done to fix it]_
+   - **Status:** Fixed / Deferred
+
+2. _[Additional issues...]_
+
+### Pre-Launch Checklist
+
+**All items must be checked before proceeding to Day 1:**
+
+- [ ] Package builds and installs correctly
+- [ ] CLI commands all work
+- [ ] SQLite alert test passes end-to-end
+- [ ] Examples validate successfully
+- [ ] Docker image builds and runs
+- [ ] Documentation is accurate
+- [ ] No critical bugs found
+- [ ] All issues documented and resolved/deferred
+
+### Decision Point
+
+**STOP** - Do not proceed to Day 1 until all critical issues are resolved.
+
+**If everything passes:** Proceed to Day 1 - Repository & CI/CD Setup
+
+**If critical issues found:** Fix them first, then re-run Day 0 validation
 
 ---
 
@@ -771,11 +1169,14 @@ SQL Sentinel works naturally with AI coding assistants like Claude Code. [Learn 
 
 | Day | Morning (4h) | Afternoon (4h) | Evening (optional) |
 |-----|--------------|----------------|-------------------|
+| **Day 0** | Package build & install test, SQLite alert test | Docker test, examples validation, docs check | Fix any issues found |
 | **Day 1** | GitHub setup, CONTRIBUTING.md, CHANGELOG.md | GitHub Actions CI/CD, pre-commit hooks | Review CI results |
 | **Day 2** | Package testing, TestPyPI, PyPI publish | Docker Hub setup, multi-platform builds | Test installations |
 | **Day 3** | README enhancements, demo GIF, AI docs | FAQ/Architecture/Security docs, GitHub release | Launch announcements |
 
-**Total: 24 hours active work over 3 days**
+**Total: 26-30 hours active work over 4 days (Day 0 + 3 days)**
+
+**Note:** Day 0 (Pre-Launch Validation) is CRITICAL - do not skip!
 
 ---
 
