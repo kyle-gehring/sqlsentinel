@@ -28,7 +28,7 @@ alerts:
     notify:
       - channel: email
         recipients:
-          - "sqlsentinel@kylegehring.com"
+          - "alerts@example.com"
         subject: "Revenue Alert: {alert_name}"
 
   - name: "high_error_rate"
@@ -56,7 +56,7 @@ alerts:
     notify:
       - channel: email
         recipients:
-          - "sqlsentinel@kylegehring.com"
+          - "alerts@example.com"
 
   - name: "data_freshness_check"
     description: "Alert when data hasn't been updated in 24 hours"
@@ -80,4 +80,4 @@ alerts:
     notify:
       - channel: email
         recipients:
-          - "sqlsentinel@kylegehring.com"
+          - "alerts@example.com"

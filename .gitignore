@@ -73,6 +73,24 @@ logs/
 .bigquery_credentials.json
 .bigquery_*.json
 
+# Coverage artifacts
+coverage.json
+
+# Security reports
+security-reports/
+
+# Test virtual environments
+test-env/
+test-venv/
+
+# Sprint docs (internal)
+docs/sprints/
+
+# Devcontainer firewall config (personal)
+.devcontainer/init-firewall*.sh
+.devcontainer/init-firewall*.patch
+.devcontainer/FIREWALL_CHANGES.md
+
 # Service account keys and secrets
 .secrets/
 .gcp/

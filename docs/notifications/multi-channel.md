@@ -23,7 +23,7 @@ alerts:
     notify:
       # Send to email
       - channel: email
-        recipients: ["sqlsentinel@kylegehring.com"]
+        recipients: ["alerts@example.com"]
         subject: "CRITICAL: System Failure"
 
       # AND send to Slack
@@ -171,7 +171,7 @@ Use different channels based on alert severity:
       url: "${PAGERDUTY_WEBHOOK}"
       headers:
         Authorization: "Token token=${PAGERDUTY_TOKEN}"
-        From: "sqlsentinel@kylegehring.com"
+        From: "alerts@example.com"
 ```
 
 ### Example 2: Data Quality Monitoring
@@ -377,7 +377,7 @@ Create separate alerts to test each channel:
   enabled: false
   notify:
     - channel: email
-      recipients: ["sqlsentinel@kylegehring.com"]
+      recipients: ["alerts@example.com"]
 
 # Test Slack only
 - name: "test_slack"

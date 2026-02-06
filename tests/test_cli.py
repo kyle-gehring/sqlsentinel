@@ -51,7 +51,7 @@ class TestAppConfig:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
         )
@@ -147,7 +147,7 @@ class TestRunAlert:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
         )
@@ -209,7 +209,7 @@ class TestRunAlert:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
         )
@@ -250,7 +250,7 @@ class TestRunAlert:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
         )
@@ -303,7 +303,7 @@ class TestRunAlert:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
         )
@@ -378,7 +378,7 @@ class TestRunAllAlerts:
                 notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
                 enabled=True,
@@ -391,7 +391,7 @@ class TestRunAllAlerts:
                 notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
                 enabled=True,
@@ -449,7 +449,7 @@ class TestRunAllAlerts:
                 notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
                 enabled=True,
@@ -462,7 +462,7 @@ class TestRunAllAlerts:
                 notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
                 enabled=False,
@@ -519,7 +519,7 @@ class TestRunAllAlerts:
                 notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
             ),
@@ -531,7 +531,7 @@ class TestRunAllAlerts:
                 notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
             ),
@@ -593,7 +593,7 @@ class TestRunAllAlerts:
                 notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
             )
@@ -651,7 +651,7 @@ class TestValidateConfig:
                 notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
                 enabled=True,
@@ -684,7 +684,7 @@ class TestValidateConfig:
                 notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"])
+                    config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
                 enabled=False,
@@ -993,7 +993,7 @@ class TestSilenceAlert:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"]),
+                    config=EmailConfig(recipients=["alerts@example.com"]),
                 )
             ],
         )
@@ -1028,7 +1028,7 @@ class TestSilenceAlert:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"]),
+                    config=EmailConfig(recipients=["alerts@example.com"]),
                 )
             ],
         )
@@ -1076,7 +1076,7 @@ class TestUnsilenceAlert:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"]),
+                    config=EmailConfig(recipients=["alerts@example.com"]),
                 )
             ],
         )
@@ -1110,7 +1110,7 @@ class TestUnsilenceAlert:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"]),
+                    config=EmailConfig(recipients=["alerts@example.com"]),
                 )
             ],
         )
@@ -1160,7 +1160,7 @@ class TestShowStatus:
                 notify=[
                     NotificationConfig(
                         channel="email",
-                        config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"]),
+                        config=EmailConfig(recipients=["alerts@example.com"]),
                     )
                 ],
             ),
@@ -1172,7 +1172,7 @@ class TestShowStatus:
                 notify=[
                     NotificationConfig(
                         channel="email",
-                        config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"]),
+                        config=EmailConfig(recipients=["alerts@example.com"]),
                     )
                 ],
             ),
@@ -1234,7 +1234,7 @@ class TestShowStatus:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"]),
+                    config=EmailConfig(recipients=["alerts@example.com"]),
                 )
             ],
         )
@@ -1280,7 +1280,7 @@ class TestShowStatus:
                 notify=[
                     NotificationConfig(
                         channel="email",
-                        config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"]),
+                        config=EmailConfig(recipients=["alerts@example.com"]),
                     )
                 ],
             ),
@@ -1292,7 +1292,7 @@ class TestShowStatus:
                 notify=[
                     NotificationConfig(
                         channel="email",
-                        config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"]),
+                        config=EmailConfig(recipients=["alerts@example.com"]),
                     )
                 ],
             ),
@@ -1331,7 +1331,7 @@ class TestShowStatus:
             notify=[
                 NotificationConfig(
                     channel="email",
-                    config=EmailConfig(recipients=["sqlsentinel@kylegehring.com"]),
+                    config=EmailConfig(recipients=["alerts@example.com"]),
                 )
             ],
         )

@@ -30,7 +30,7 @@ alerts:
     notify:
       - channel: email
         recipients:
-          - "sqlsentinel@kylegehring.com"
+          - "alerts@example.com"
         subject: "Revenue Alert: {alert_name}"
 
   # Example 2: Slack-only notification
@@ -113,7 +113,7 @@ alerts:
       # Send to email
       - channel: email
         recipients:
-          - "sqlsentinel@kylegehring.com"
+          - "alerts@example.com"
           - "team@company.com"
         subject: "CRITICAL: Data Quality Alert - {alert_name}"
 
@@ -150,7 +150,7 @@ alerts:
       # Email notification
       - channel: email
         recipients:
-          - "sqlsentinel@kylegehring.com"
+          - "alerts@example.com"
           - "payments-team@company.com"
         subject: "URGENT: Payment Processing Alert - {alert_name}"
 
@@ -166,7 +166,7 @@ alerts:
         headers:
           Authorization: "Token token=${PAGERDUTY_TOKEN}"
           Content-Type: "application/json"
-          From: "sqlsentinel@kylegehring.com"
+          From: "alerts@example.com"
 
   # Example 6: Data freshness check with Slack
   - name: "data_freshness_check"

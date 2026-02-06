@@ -102,7 +102,7 @@ notify:
     headers:
       Authorization: "Token token=${PAGERDUTY_TOKEN}"
       Content-Type: "application/json"
-      From: "sqlsentinel@kylegehring.com"
+      From: "alerts@example.com"
 ```
 
 **Note**: For full PagerDuty integration, you may need to transform the payload. Consider using a middleware service or PagerDuty's native webhook receiver.

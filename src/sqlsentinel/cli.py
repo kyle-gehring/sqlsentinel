@@ -807,6 +807,13 @@ def main() -> int:
         description="SQL Sentinel - SQL-first alerting system",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    from . import __version__
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"sqlsentinel {__version__}",
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
