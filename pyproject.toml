@@ -7,6 +7,7 @@ license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/kyle-gehring/sql-sentinel"
 repository = "https://github.com/kyle-gehring/sql-sentinel"
+documentation = "https://github.com/kyle-gehring/sql-sentinel/tree/main/docs"
 keywords = ["sql", "alerting", "monitoring", "data-quality"]
 classifiers = [
     "Development Status :: 3 - Alpha",
