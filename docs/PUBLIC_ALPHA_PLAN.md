@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0
 **Target Date:** 2025-02-09 (4 days from now)
-**Status:** Day 1 In Progress
+**Status:** Day 2 In Progress
 
 ---
 
@@ -907,12 +907,12 @@ rm -rf /tmp/test-sqlsentinel
 ```
 
 **Checklist:**
-- [ ] Package builds without errors
-- [ ] Package installs in fresh venv
-- [ ] CLI command available (`sqlsentinel`)
-- [ ] All subcommands work (`validate`, `run`, etc.)
-- [ ] Example configs validate successfully
-- [ ] No import errors or missing dependencies
+- [x] Package builds without errors (56KB wheel, 47KB sdist)
+- [x] Package installs in fresh venv
+- [x] CLI command available (`sqlsentinel`)
+- [x] All 10 subcommands work (`validate`, `run`, etc.)
+- [x] Example configs validate successfully
+- [x] No import errors or missing dependencies
 
 #### 2.2 PyPI Publishing
 
@@ -1051,8 +1051,8 @@ docker push sqlsentinel/sqlsentinel:0.1.0
 **Checklist:**
 - [ ] Docker Hub account created
 - [ ] Repository created on Docker Hub
-- [ ] GitHub Actions workflow for Docker created
-- [ ] Multi-platform images built (amd64, arm64)
+- [x] GitHub Actions workflow for Docker created (`.github/workflows/docker-publish.yml`)
+- [ ] Multi-platform images built (amd64, arm64) — pending push + Docker Hub secrets
 - [ ] Images pushed to Docker Hub
 - [ ] `docker pull sqlsentinel/sqlsentinel` works
 - [ ] Docker image tested with example config
@@ -1060,9 +1060,12 @@ docker push sqlsentinel/sqlsentinel:0.1.0
 
 ### Day 2 Deliverables Checklist
 
-- [ ] Package published to PyPI
+- [x] Package tested locally (builds, installs, all commands work)
+- [x] GitHub Actions PyPI publish workflow created (`.github/workflows/publish.yml`)
+- [x] GitHub Actions Docker publish workflow created (`.github/workflows/docker-publish.yml`)
+- [ ] Package published to PyPI — requires PyPI account + `PYPI_TOKEN` secret
 - [ ] `pip install sqlsentinel` works globally
-- [ ] Docker images on Docker Hub
+- [ ] Docker images on Docker Hub — requires Docker Hub account + secrets
 - [ ] `docker pull sqlsentinel/sqlsentinel` works
 - [ ] Both installation methods tested on clean system
 - [ ] README updated with installation instructions
