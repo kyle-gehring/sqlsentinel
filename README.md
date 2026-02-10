@@ -182,6 +182,12 @@ Copy a template file into your project so your AI assistant understands SQL Sent
 # Claude Code
 cp docs/ai-setup/CLAUDE.md /path/to/your/project/
 
+# OpenAI Codex
+cp docs/ai-setup/AGENTS.md /path/to/your/project/
+
+# Google Gemini
+cp docs/ai-setup/GEMINI.md /path/to/your/project/
+
 # GitHub Copilot
 cp docs/ai-setup/copilot-instructions.md /path/to/your/project/.github/
 

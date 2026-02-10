@@ -1,6 +1,6 @@
 # AI Assistant Setup for SQL Sentinel
 
-These template files help AI coding assistants (Claude Code, GitHub Copilot, Cursor) understand SQL Sentinel when working in **your project**.
+These template files help AI coding assistants understand SQL Sentinel when working in **your project**.
 
 ## Why?
 
@@ -17,6 +17,22 @@ cp CLAUDE.md /path/to/your/project/CLAUDE.md
 ```
 
 Claude Code automatically reads `CLAUDE.md` from any directory it works in.
+
+### OpenAI Codex
+
+```bash
+cp AGENTS.md /path/to/your/project/AGENTS.md
+```
+
+Codex automatically reads `AGENTS.md` from the project root.
+
+### Google Gemini Code Assist
+
+```bash
+cp GEMINI.md /path/to/your/project/GEMINI.md
+```
+
+Gemini reads `GEMINI.md` from the project root.
 
 ### GitHub Copilot
 
