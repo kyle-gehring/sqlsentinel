@@ -699,11 +699,11 @@ EOF
 ### Morning (4 hours)
 
 #### 1.1 Create GitHub Repository
-- [ ] Create repository: `github.com/kyle-gehring/sql-sentinel`
-- [ ] Set visibility to **Public**
-- [ ] Add description: "SQL-first alerting system for data analysts"
-- [ ] Add topics: `sql`, `alerting`, `monitoring`, `data-quality`, `python`, `ai-first`
-- [ ] Initialize with existing code (push from local)
+- [x] Create repository: `github.com/kyle-gehring/sql-sentinel` (**exists**)
+- [ ] Set visibility to **Public** ⚠️ *manual action required*
+- [ ] Add description: "SQL-first alerting system for data analysts" ⚠️ *manual action required*
+- [ ] Add topics: `sql`, `alerting`, `monitoring`, `data-quality`, `python`, `ai-first` ⚠️ *manual action required*
+- [x] Initialize with existing code (push from local)
 
 #### 1.2 Essential Documentation Files
 - [x] **CONTRIBUTING.md**
@@ -863,15 +863,15 @@ repos:
 
 ### Day 1 Deliverables Checklist
 
-- [ ] GitHub repository created and public
+- [ ] GitHub repository set to public ⚠️ *manual action required*
 - [x] CONTRIBUTING.md complete
 - [x] CHANGELOG.md initialized
 - [x] GitHub Actions CI/CD workflow created (`.github/workflows/ci.yml`)
 - [x] Pre-commit hooks configured (already existed)
 - [x] Issue/PR templates created
 - [x] All URLs updated in pyproject.toml
-- [ ] Initial commit pushed with all changes
-- [ ] CI pipeline passes (tests, lint, security) — pending push to GitHub
+- [x] All changes committed and pushed
+- [ ] CI pipeline passes (tests, lint, security) — verify after merge to main ⚠️ *manual action required*
 
 ---
 
@@ -916,7 +916,7 @@ rm -rf /tmp/test-sqlsentinel
 
 #### 2.2 PyPI Publishing
 
-**Prerequisites:**
+**Prerequisites:** ⚠️ *all manual actions*
 - [ ] Create PyPI account at https://pypi.org/account/register/
 - [ ] Generate API token at https://pypi.org/manage/account/token/
 - [ ] Add token to GitHub Secrets: `PYPI_TOKEN`
@@ -951,7 +951,7 @@ pip install sqlsentinel
 sqlsentinel --version
 ```
 
-**Checklist:**
+**Checklist:** ⚠️ *all manual actions*
 - [ ] PyPI account created
 - [ ] API token generated
 - [ ] Published to TestPyPI successfully
@@ -964,11 +964,11 @@ sqlsentinel --version
 
 #### 2.3 Docker Hub Publishing
 
-**Prerequisites:**
+**Prerequisites:** ⚠️ *all manual actions*
 - [ ] Create Docker Hub account at https://hub.docker.com/
 - [ ] Create repository: `sqlsentinel/sqlsentinel`
 - [ ] Generate access token
-- [ ] Add token to GitHub Secrets: `DOCKERHUB_TOKEN`
+- [ ] Add secrets to GitHub: `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`
 
 **Create `.github/workflows/docker-publish.yml`:**
 
