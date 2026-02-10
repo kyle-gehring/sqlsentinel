@@ -1,0 +1,60 @@
+# SQL Sentinel — Cursor Rules
+
+## What is SQL Sentinel?
+
+SQL Sentinel is a SQL-first alerting system. Users define alerts as SQL queries in YAML config files. The system runs queries on a schedule and sends notifications when the query returns 'ALERT' status.
+
+## Alert Config Structure
+
+Every alert config needs a database URL and alert definitions:
+
+```yaml
+database:
+  url: "postgresql://user:pass@host/db"
+
+alerts:
+  - name: "alert_name"
+    description: "Human-readable description"
+    query: |
+      SELECT
+        CASE WHEN <condition> THEN 'ALERT' ELSE 'OK' END as status,
+        <metric> as actual_value,
+        <limit> as threshold
+      FROM <table>
+      WHERE <filters>
+    schedule: "0 9 * * *"
+    notify:
+      - channel: email
+        recipients: ["team@company.com"]
+```
+
+## Query Contract
+
+Every alert query MUST return a `status` column with value 'ALERT' or 'OK'. Optional: `actual_value`, `threshold`, plus any context columns.
+
+## CLI Commands
+
+- `sqlsentinel validate <config>` — Validate YAML config
+- `sqlsentinel run <config> [--alert NAME] [--dry-run]` — Run alerts
+- `sqlsentinel daemon <config>` — Run on cron schedule
+- `sqlsentinel history [--state-db URL]` — Execution history
+- `sqlsentinel status <config>` — Alert states
+- `sqlsentinel silence <config> --alert NAME [--duration HOURS]` — Silence alert
+- `sqlsentinel unsilence <config> --alert NAME` — Unsilence alert
+- `sqlsentinel healthcheck <config>` — System health
+- `sqlsentinel metrics` — Prometheus metrics
+- `sqlsentinel init <config>` — Initialize state database
+
+## Supported Databases
+
+PostgreSQL, MySQL/MariaDB, SQLite, SQL Server, Snowflake, BigQuery, Redshift, DuckDB (via SQLAlchemy).
+
+## Notification Channels
+
+- email: SMTP env vars (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM)
+- slack: webhook URL
+- webhook: generic HTTP POST
+
+## Development
+
+All commands require `poetry run` prefix. Python 3.11+, strict mypy, Black (100 char lines), Ruff linting, Pydantic v2, 80% min test coverage.

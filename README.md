@@ -174,6 +174,23 @@ SQL Sentinel works naturally with AI coding assistants like [Claude Code](https:
 
 All of these work naturally with Claude Code — no MCP server needed. See [AI Workflows Guide](docs/ai-workflows.md) for more examples.
 
+### Set Up Your AI Assistant
+
+Copy a template file into your project so your AI assistant understands SQL Sentinel:
+
+```bash
+# Claude Code
+cp docs/ai-setup/CLAUDE.md /path/to/your/project/
+
+# GitHub Copilot
+cp docs/ai-setup/copilot-instructions.md /path/to/your/project/.github/
+
+# Cursor
+cp docs/ai-setup/.cursorrules /path/to/your/project/
+```
+
+See [AI Setup Guide](docs/ai-setup/) for details.
+
 ## Examples
 
 The [`examples/`](examples/) directory contains ready-to-run configurations:

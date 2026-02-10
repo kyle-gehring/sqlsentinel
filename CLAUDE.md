@@ -1,156 +1,122 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working in this repository.
 
-## Project Overview
+## What is SQL Sentinel?
 
-SQL Sentinel is an open-source, lightweight SQL-first alerting system that enables data analysts to monitor business metrics and data quality using only SQL queries. The system allows users to define alerts through YAML configuration files, execute SQL queries on a schedule, and receive notifications when specified conditions are met.
+SQL Sentinel is a SQL-first alerting system. Users define alerts as SQL queries in YAML config files. The system runs those queries on a schedule and sends notifications (email, Slack, webhook) when the query returns `'ALERT'` status.
 
-## Architecture
+## Helping Users with SQL Sentinel
 
-This is a **greenfield project** - currently only documentation exists. The system will be implemented with the following architecture:
+When a user asks you to create, modify, or troubleshoot alerts, follow these patterns.
 
-### Core Components
-
-- **Configuration Layer**: YAML-based alert definitions
-- **Alert Engine**: Scheduler, Executor, and Evaluator components
-- **Database Adapters**: SQLAlchemy-based adapters for multiple database types
-- **Notification System**: Multi-channel notification delivery
-- **State Management**: Minimal state tracking to prevent duplicate alerts
-
-### Technology Stack
-
-- **Language**: Python (for SQL ecosystem and analyst familiarity)
-- **Configuration**: YAML files
-- **Database**: SQLAlchemy for multi-database support
-- **Deployment**: Docker-first approach
-- **Scheduling**: Cron-based scheduling system
-
-## Development Setup
-
-The development environment is configured for:
-
-- DevContainer with Python development environment
-- VS Code with ESLint, Prettier, and Claude Code extensions
-- Zsh terminal with Git support
-- **Poetry** for Python dependency management
-
-### Important: Running Commands
-
-**CRITICAL**: All Python commands (pytest, python, etc.) must be run with `poetry run` prefix because dependencies are installed in a Poetry virtual environment.
-
-**Correct:**
-```bash
-poetry run pytest tests/
-poetry run python -m sqlsentinel.cli --help
-poetry run black src/
-poetry run ruff check src/
-poetry run mypy src/
-```
-
-**Incorrect:**
-```bash
-pytest tests/              # Will fail - packages not found
-python -m sqlsentinel.cli  # Will fail - packages not found
-```
-
-Dependencies are managed via `pyproject.toml` and installed automatically when the devcontainer is built via the `postCreateCommand: poetry install` in `.devcontainer/devcontainer.json`.
-
-## Key Implementation Guidelines
-
-### Alert Query Contract
-
-All alert queries must return a result set with:
-
-- **Required**: `status` column with values 'ALERT' or 'OK'
-- **Optional**: `actual_value` - the metric value that triggered the alert
-- **Optional**: `threshold` - the threshold that was exceeded
-- **Optional**: Additional columns for context in notifications
-
-### Supported Data Platforms (Target)
-
-- **Cloud Data Warehouses**: BigQuery, Snowflake, Redshift, Synapse Analytics
-- **Traditional Databases**: PostgreSQL, MySQL/MariaDB, Microsoft SQL Server
-- **Local/Development**: SQLite, DuckDB
-- **Cloud Analytics**: Athena, Azure Data Explorer
-
-### Configuration Example
+### Alert Config Structure
 
 ```yaml
+database:
+  url: "postgresql://user:pass@host/db"  # SQLAlchemy connection string
+
 alerts:
-  - name: "Low Daily Revenue"
-    description: "Alert when yesterday's revenue falls below threshold"
+  - name: "alert_name"
+    description: "Human-readable description"
+    enabled: true
     query: |
-      SELECT 
-        CASE WHEN SUM(revenue) < 10000 THEN 'ALERT' ELSE 'OK' END as status,
-        SUM(revenue) as actual_value,
-        10000 as threshold
-      FROM orders 
-      WHERE date = CURRENT_DATE - 1
-    schedule: "0 9 * * *"
+      SELECT
+        CASE WHEN <condition> THEN 'ALERT' ELSE 'OK' END as status,
+        <metric> as actual_value,
+        <limit> as threshold
+      FROM <table>
+      WHERE <filters>
+    schedule: "0 9 * * *"  # Cron expression
     notify:
       - channel: email
         recipients: ["team@company.com"]
+      - channel: slack
+        webhook: "${SLACK_WEBHOOK_URL}"
+      - channel: webhook
+        url: "https://example.com/hook"
 ```
 
-## Implementation Phases
+### Query Contract
 
-### Phase 1: MVP
+Every alert query MUST return a `status` column with value `'ALERT'` or `'OK'`. Optional columns: `actual_value`, `threshold`, plus any additional context columns.
 
-- Basic YAML configuration parser
-- PostgreSQL support only
-- Simple cron scheduling
-- Email notifications only
-- Docker container
-
-### Phase 2: Core Features
-
-- Multiple database support via SQLAlchemy
-- Slack and webhook notifications
-- State tracking (prevent duplicate alerts)
-- Error handling and retries
-- Cloud storage support
-
-### Phase 3: Production Ready
-
-- Web UI for configuration
-- Alert history and analytics
-- Multiple notification channels
-- Terraform modules and Helm charts
-
-## Design Principles
-
-1. **SQL-First**: No proprietary query language or complex DSL
-2. **Lightweight**: Minimal resource requirements
-3. **GitOps Friendly**: Configuration as code
-4. **Cloud Agnostic**: Runs anywhere Docker runs
-5. **Analyst Focused**: Built for SQL users, not developers
-
-## Quick Start Target
-
-The system should enable a data analyst with only SQL knowledge to successfully deploy and use it within 15 minutes.
-
-**Local Development:**
+### CLI Commands
 
 ```bash
-docker run -d \
-  -v $(pwd)/alerts.yaml:/config/alerts.yaml \
-  -e DATABASE_URL="postgresql://user:pass@host/db" \
-  sqlsentinel/sqlsentinel:latest
+sqlsentinel validate <config>                        # Validate YAML config
+sqlsentinel run <config> [--alert NAME] [--dry-run]  # Run alerts
+sqlsentinel daemon <config>                          # Run on cron schedule
+sqlsentinel history [--state-db URL]                 # Execution history
+sqlsentinel status <config>                          # Alert states
+sqlsentinel silence <config> --alert NAME [--duration HOURS]
+sqlsentinel unsilence <config> --alert NAME
+sqlsentinel healthcheck <config>                     # System health
+sqlsentinel metrics                                  # Prometheus metrics
+sqlsentinel init <config>                            # Init state database
 ```
 
-**Cloud Deployment (Any Platform):**
+### Workflow When Creating Alerts
+
+1. Ask the user what metric/condition they want to monitor
+2. Ask which database dialect (PostgreSQL, MySQL, BigQuery, SQLite, etc.)
+3. Write the SQL query using the correct dialect
+4. Add the alert to their YAML config
+5. Run `sqlsentinel validate <config>` to verify
+6. Run `sqlsentinel run <config> --alert "name" --dry-run` to test
+7. Confirm results look correct before enabling notifications
+
+### Supported Databases
+
+SQLAlchemy-based: PostgreSQL, MySQL/MariaDB, SQLite, SQL Server, Snowflake, BigQuery, Redshift, DuckDB.
+
+### Notification Channels
+
+- **email**: Requires SMTP env vars (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`)
+- **slack**: Requires `webhook` URL
+- **webhook**: Generic HTTP POST to any `url`
+
+---
+
+## Development
+
+Instructions for contributing to SQL Sentinel itself.
+
+### Running Commands
+
+**All commands require `poetry run` prefix** — dependencies are in a Poetry virtualenv.
 
 ```bash
-# Choose your platform
-./scripts/deploy-gcp.sh --project=YOUR-PROJECT        # Google Cloud
-./scripts/deploy-aws.sh --cluster=YOUR-CLUSTER       # AWS
-./scripts/deploy-azure.sh --workspace=YOUR-WORKSPACE # Azure
-./scripts/deploy-snowflake.sh --account=YOUR-ACCOUNT # Snowflake
+poetry run pytest                        # Run tests (529 passing, 92.9% coverage)
+poetry run black src/ tests/             # Format
+poetry run ruff check src/ tests/        # Lint
+poetry run mypy src/                     # Type check
+poetry run sqlsentinel --help            # Run CLI
 ```
 
-## General Notes
+### Project Structure
 
-1. **Dependencies**: All dependencies are managed via `pyproject.toml` and Poetry. When adding new dependencies, add them to `pyproject.toml` and the devcontainer will install them on rebuild. Do NOT use `pip install` or `poetry install` manually - the devcontainer handles this.
+```
+src/sqlsentinel/
+├── cli.py                 # CLI entry point (argparse)
+├── config.py              # YAML config loading + Pydantic models
+├── executor.py            # Alert query execution
+├── state.py               # State database (SQLite) for dedup/history
+├── scheduler/
+│   ├── scheduler.py       # APScheduler-based cron scheduling
+│   └── config_watcher.py  # Watchdog file watcher for config reload
+├── notifications/
+│   ├── email.py           # SMTP email
+│   ├── slack.py           # Slack webhook
+│   ├── webhook.py         # Generic webhook
+│   └── factory.py         # Notification channel factory
+└── models/                # Pydantic models
+```
 
-2. **Running Commands**: Always use `poetry run` prefix for all Python commands (see Development Setup section above).
+### Key Conventions
+
+- Python 3.11+, strict mypy, Black (100 char), Ruff
+- Tests in `tests/` mirroring `src/` structure
+- Config validation via Pydantic v2
+- All database access via SQLAlchemy
+- 80% minimum test coverage enforced
