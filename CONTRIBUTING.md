@@ -18,8 +18,8 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 1. **Fork and clone the repository:**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/sql-sentinel.git
-   cd sql-sentinel
+   git clone https://github.com/YOUR_USERNAME/sqlsentinel.git
+   cd sqlsentinel
    ```
 
 2. **Install dependencies:**
@@ -128,7 +128,7 @@ convenience.
 ## Project Structure
 
 ```
-sql-sentinel/
+sqlsentinel/
 ├── src/sqlsentinel/       # Main package
 │   ├── cli.py             # CLI entry point
 │   ├── config.py          # YAML configuration parsing
@@ -144,11 +144,11 @@ sql-sentinel/
 
 ## Reporting Issues
 
-- Use the [bug report template](https://github.com/kyle-gehring/sql-sentinel/issues/new?template=bug_report.md) for bugs
-- Use the [feature request template](https://github.com/kyle-gehring/sql-sentinel/issues/new?template=feature_request.md) for ideas
+- Use the [bug report template](https://github.com/kyle-gehring/sqlsentinel/issues/new?template=bug_report.md) for bugs
+- Use the [feature request template](https://github.com/kyle-gehring/sqlsentinel/issues/new?template=feature_request.md) for ideas
 
 Include as much detail as possible: steps to reproduce, expected vs actual behavior, and your environment (Python version, OS, database type).
 
 ## Questions?
 
-Open a [discussion](https://github.com/kyle-gehring/sql-sentinel/discussions) or file an issue. We're happy to help!
+Open a [discussion](https://github.com/kyle-gehring/sqlsentinel/discussions) or file an issue. We're happy to help!

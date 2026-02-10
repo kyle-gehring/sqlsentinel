@@ -1,6 +1,6 @@
 # SQL Sentinel
 
-[![CI](https://github.com/kyle-gehring/sql-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/kyle-gehring/sql-sentinel/actions/workflows/ci.yml)
+[![CI](https://github.com/kyle-gehring/sqlsentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/kyle-gehring/sqlsentinel/actions/workflows/ci.yml)
 [![PyPI version](https://badge.fury.io/py/sqlsentinel.svg)](https://pypi.org/project/sqlsentinel/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -52,8 +52,8 @@ docker pull sqlsentinel/sqlsentinel:latest
 ### From source
 
 ```bash
-git clone https://github.com/kyle-gehring/sql-sentinel.git
-cd sql-sentinel
+git clone https://github.com/kyle-gehring/sqlsentinel.git
+cd sqlsentinel
 pip install .
 ```
 

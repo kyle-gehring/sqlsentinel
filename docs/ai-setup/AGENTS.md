@@ -1,6 +1,6 @@
 # AGENTS.md — SQL Sentinel
 
-This project uses [SQL Sentinel](https://github.com/kyle-gehring/sql-sentinel) for SQL-based alerting.
+This project uses [SQL Sentinel](https://github.com/kyle-gehring/sqlsentinel) for SQL-based alerting.
 
 ## What is SQL Sentinel?
 

@@ -5,9 +5,9 @@ description = "SQL-first alerting system for data analysts"
 authors = ["SQL Sentinel Contributors"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/kyle-gehring/sql-sentinel"
-repository = "https://github.com/kyle-gehring/sql-sentinel"
-documentation = "https://github.com/kyle-gehring/sql-sentinel/tree/main/docs"
+homepage = "https://github.com/kyle-gehring/sqlsentinel"
+repository = "https://github.com/kyle-gehring/sqlsentinel"
+documentation = "https://github.com/kyle-gehring/sqlsentinel/tree/main/docs"
 keywords = ["sql", "alerting", "monitoring", "data-quality"]
 classifiers = [
     "Development Status :: 3 - Alpha",

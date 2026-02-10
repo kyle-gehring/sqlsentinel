@@ -5,7 +5,7 @@
 If you discover a security vulnerability, please report it responsibly:
 
 1. **Do not** open a public GitHub issue
-2. Email security concerns to the maintainers via the [GitHub Security Advisories](https://github.com/kyle-gehring/sql-sentinel/security/advisories/new) feature
+2. Email security concerns to the maintainers via the [GitHub Security Advisories](https://github.com/kyle-gehring/sqlsentinel/security/advisories/new) feature
 3. Include steps to reproduce and potential impact
 
 ## Security Considerations

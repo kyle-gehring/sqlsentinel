@@ -1,6 +1,6 @@
 # SQL Sentinel — Cursor Rules
 
-This project uses SQL Sentinel (https://github.com/kyle-gehring/sql-sentinel) for SQL-based alerting.
+This project uses SQL Sentinel (https://github.com/kyle-gehring/sqlsentinel) for SQL-based alerting.
 
 ## Alert Config Structure
 

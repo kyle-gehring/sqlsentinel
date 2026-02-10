@@ -15,7 +15,7 @@ Everything below requires human action — accounts, credentials, UI clicks, or 
 
 **Time:** 5 minutes
 
-The repo exists at `github.com/kyle-gehring/sql-sentinel`. Configure it for public release:
+The repo exists at `github.com/kyle-gehring/sqlsentinel`. Configure it for public release:
 
 1. Go to **Settings > General**
    - Set visibility to **Public**
@@ -152,7 +152,7 @@ git push origin v0.1.0
 
 #### 5b. Create GitHub Release
 
-Go to https://github.com/kyle-gehring/sql-sentinel/releases/new
+Go to https://github.com/kyle-gehring/sqlsentinel/releases/new
 
 - **Tag:** `v0.1.0`
 - **Title:** `SQL Sentinel v0.1.0 - Public Alpha`
@@ -187,7 +187,7 @@ docker pull sqlsentinel/sqlsentinel:latest
 
 ## Quick Start
 
-See the [README](https://github.com/kyle-gehring/sql-sentinel#quick-start-5-minutes) for a 5-minute quickstart guide.
+See the [README](https://github.com/kyle-gehring/sqlsentinel#quick-start-5-minutes) for a 5-minute quickstart guide.
 
 ## Known Limitations
 
@@ -200,7 +200,7 @@ See the [README](https://github.com/kyle-gehring/sql-sentinel#quick-start-5-minu
 - Additional notification channels
 - Community-requested features
 
-**Full Changelog**: https://github.com/kyle-gehring/sql-sentinel/blob/main/CHANGELOG.md
+**Full Changelog**: https://github.com/kyle-gehring/sqlsentinel/blob/main/CHANGELOG.md
 ```
 
 #### 5c. Verify
