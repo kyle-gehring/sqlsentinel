@@ -1,344 +1,71 @@
-# SQL Sentinel: SQL-First Alerting System for Data Analysts
+# SQL Sentinel
 
-## Project Overview
+[![CI](https://github.com/kyle-gehring/sql-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/kyle-gehring/sql-sentinel/actions/workflows/ci.yml)
+[![PyPI version](https://badge.fury.io/py/sqlsentinel.svg)](https://pypi.org/project/sqlsentinel/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 
-SQL Sentinel is an open-source, lightweight alerting system that enables data analysts to monitor business metrics and data quality using only SQL queries. It allows users to define alerts through simple YAML configuration files, execute SQL queries on a schedule, and receive notifications when specified conditions are met.
-
-The system is designed to be cloud-agnostic, deployable via Docker, and requires no programming knowledge beyond SQL. It fills the gap between expensive enterprise monitoring solutions and complex developer-focused tools.
-
-## Problem Statement
-
-Data analysts frequently need to monitor business metrics and alert stakeholders when conditions fall outside expected ranges. Current solutions either:
-
-- Require expensive enterprise licenses (Datadog, New Relic)
-- Include unnecessary BI platform overhead (Tableau, Metabase)
-- Demand significant technical expertise (Airflow, Prometheus)
-- Are abandoned or poorly maintained (various GitHub projects)
-
-Teams need a simple, SQL-first solution that analysts can configure without engineering support.
-
-## Target Users
-
-### Primary Users
-
-- **Data Analysts**: Proficient in SQL but not necessarily in programming
-- **Analytics Engineers**: Managing data quality and business metric monitoring
-- **Business Intelligence Teams**: Needing automated alerting without full BI platforms
-- **Small/Medium Businesses**: Requiring cost-effective monitoring solutions
-
-### Use Cases
-
-- Revenue threshold monitoring (e.g. daily sales below $10,000)
-- Data quality checks (e.g. null values exceeding thresholds)
-- SLA monitoring (e.g. hourly transaction volumes)
-- Inventory alerts (e.g. stock levels below minimum)
-- Customer behavior changes (e.g. cart abandonment rates)
-- Pipeline monitoring (e.g. ETL job failures or delays)
-
-## Core Functionality
-
-### 1. Configuration System
+**SQL-first alerting for data analysts.** Monitor business metrics and data quality using the SQL you already know.
 
 ```yaml
-# Example: alerts.yaml
+# alerts.yaml — that's all you need
+database:
+  url: "postgresql://user:pass@localhost/mydb"
+
 alerts:
-  - name: "Low Daily Revenue"
-    description: "Alert when yesterday's revenue falls below threshold"
+  - name: "Daily Revenue Check"
     query: |
-      SELECT 
+      SELECT
         CASE WHEN SUM(revenue) < 10000 THEN 'ALERT' ELSE 'OK' END as status,
         SUM(revenue) as actual_value,
-        10000 as threshold,
-        COUNT(*) as order_count
-      FROM orders 
-      WHERE date = CURRENT_DATE - 1
-    schedule: "0 9 * * *" # Daily at 9 AM (cron format)
+        10000 as threshold
+      FROM orders
+      WHERE order_date = CURRENT_DATE - 1
+    schedule: "0 9 * * *"
     notify:
       - channel: email
         recipients: ["team@company.com"]
-      - channel: slack
-        webhook: "${SLACK_WEBHOOK_URL}"
-    metadata:
-      severity: "high"
-      team: "revenue"
-      documentation: "https://wiki/revenue-alerts"
 ```
 
-### 2. Query Contract
-
-All alert queries must return a result set with:
-
-- **Required**: `status` column with values 'ALERT' or 'OK'
-- **Optional**: `actual_value` - the metric value that triggered the alert
-- **Optional**: `threshold` - the threshold that was exceeded
-- **Optional**: Additional columns for context in notifications
-
-### 3. Supported Databases
-
-Initial support via SQLAlchemy:
-
-- PostgreSQL
-- MySQL/MariaDB
-- SQLite
-- Microsoft SQL Server
-- Snowflake
-- BigQuery
-- Redshift
-- DuckDB
-
-Connection via environment variables or connection strings in configuration.
-
-### 4. Notification Channels
-
-- Email (SMTP)
-- Slack (webhook)
-- Webhook (generic HTTP POST)
-
-### 5. Scheduling Options
-
-- Cron expressions for complex schedules
-- Simplified presets: hourly, daily, weekly, monthly
-- Timezone support
-- Blackout windows (no alerts during maintenance)
-
-## Technical Architecture
-
-### Core Components
-
-```mermaid
-graph TD
-    A1[alerts/revenue.yaml] --> B[Serverless Runtime<br/>SQL Sentinel App]
-    A2[alerts/quality.yaml] --> B
-    A3[alerts/inventory.yaml] --> B
-    A4[.github/workflows/] --> B
-
-    B --> C[Data Warehouse<br/>Queries+State+Config]
-    B --> D[Secret Manager<br/>API Keys]
-    B --> E[Scheduler<br/>Cron Jobs]
-
-    subgraph "Git Repository"
-        A1
-        A2
-        A3
-        A4
-    end
-
-    subgraph "Cloud Platform (Any Provider)"
-        B
-        C
-        D
-        E
-    end
+```bash
+sqlsentinel validate alerts.yaml   # Check config
+sqlsentinel run alerts.yaml --dry-run  # Test without sending notifications
+sqlsentinel daemon alerts.yaml     # Run on schedule
 ```
 
+---
 
-#### Data Warehouse-Centric Design:
-- **Configuration Storage**: Alert definitions stored in data warehouse tables
-- **State Management**: Execution history and alert state in same system as data
-- **Data Queries**: Native integration with your existing data warehouse
-- **GitOps Workflow**: YAML configs in Git synced to data warehouse via CI/CD
+## Installation
 
-
-### Deployment Models
-
-1. **Serverless**: AWS Lambda, Google Cloud Run, Azure Functions
-2. **Container**: Docker on Kubernetes, ECS, Cloud Run
-3. **Development**: Local Docker or Python virtual environment
-
-### State Management (Multi-Cloud)
-
-SQL Sentinel stores minimal state in your existing data warehouse using standard SQL.
-
-**Core Tables (Universal SQL):**
-```sql
--- Alert configuration storage
-CREATE TABLE sqlsentinel_configs (
-  alert_name VARCHAR(255) NOT NULL,
-  config JSON,  -- Full YAML config stored as JSON
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
-);
-
--- Alert execution history  
-CREATE TABLE sqlsentinel_executions (
-  execution_id VARCHAR(36) NOT NULL,
-  alert_name VARCHAR(255) NOT NULL,
-  execution_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
-  status VARCHAR(50), -- 'ALERT', 'OK', 'ERROR'
-  actual_value NUMERIC,
-  threshold NUMERIC,
-  error_message TEXT,
-  notification_sent BOOLEAN DEFAULT FALSE,
-  duration_ms INTEGER,
-  query_result JSON
-);
-
--- Current alert state (for deduplication)
-CREATE TABLE sqlsentinel_state (
-  alert_name VARCHAR(255) PRIMARY KEY,
-  last_status VARCHAR(50),
-  last_alert_time TIMESTAMP,
-  consecutive_alerts INTEGER DEFAULT 0,
-  is_silenced BOOLEAN DEFAULT FALSE,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
-);
-```
-
-**Platform-Specific Optimizations:**
-- **BigQuery**: Partitioned tables, `GENERATE_UUID()` functions
-- **Snowflake**: Time Travel, `UUID_STRING()` functions  
-- **Redshift**: Columnar storage, distribution keys
-- **PostgreSQL/MySQL**: Standard indexes and constraints
-
-## Configuration Examples
-
-### Example 1: E-commerce Monitoring
-
-```yaml
-alerts:
-  - name: "Abandoned Cart Rate High"
-    query: |
-      WITH cart_stats AS (
-        SELECT 
-          COUNT(DISTINCT CASE WHEN abandoned THEN session_id END)::FLOAT / 
-          COUNT(DISTINCT session_id) as abandonment_rate
-        FROM cart_sessions
-        WHERE created_at > NOW() - INTERVAL '1 hour'
-      )
-      SELECT 
-        CASE WHEN abandonment_rate > 0.7 THEN 'ALERT' ELSE 'OK' END as status,
-        abandonment_rate as actual_value,
-        0.7 as threshold
-      FROM cart_stats
-    schedule: "*/15 * * * *" # Every 15 minutes
-    notify:
-      - channel: slack
-        webhook: "${SLACK_WEBHOOK_URL}"
-        template: "🛒 High cart abandonment: {actual_value:.1%} (threshold: {threshold:.1%})"
-```
-
-### Example 2: Data Quality Check
-
-```yaml
-alerts:
-  - name: "Customer Data Completeness"
-    query: |
-      SELECT 
-        CASE WHEN null_percentage > 5 THEN 'ALERT' ELSE 'OK' END as status,
-        null_percentage as actual_value,
-        5 as threshold,
-        total_records,
-        null_count
-      FROM (
-        SELECT 
-          COUNT(*) as total_records,
-          SUM(CASE WHEN email IS NULL OR phone IS NULL THEN 1 ELSE 0 END) as null_count,
-          (SUM(CASE WHEN email IS NULL OR phone IS NULL THEN 1 ELSE 0 END)::FLOAT / COUNT(*)) * 100 as null_percentage
-        FROM customers
-        WHERE created_date = CURRENT_DATE - 1
-      ) AS quality_check
-    schedule: "0 6 * * *" # Daily at 6 AM
-    notify:
-    
-      - channel: email
-        recipients: ["data-quality@company.com"]
-```
-
-## Competitive Advantages
-
-1. **SQL-First**: No proprietary query language or complex DSL
-2. **Data Warehouse-Native**: Uses your existing data infrastructure, no additional databases
-3. **GitOps Friendly**: Configuration as code, version controlled, synced to data warehouse
-4. **Cloud-Agnostic**: Works with BigQuery, Snowflake, Redshift, Synapse, PostgreSQL
-5. **Cost Effective**: 70-80% cheaper than traditional solutions (~$10-30/month)
-6. **Analyst Focused**: Built for SQL users, integrates with familiar tools
-7. **Zero Infrastructure Management**: No separate databases, caches, or storage to maintain
-8. **Serverless-Ready**: Scales to zero on all major cloud platforms
-
-## Open Source Strategy
-
-### License
-
-MIT License for maximum adoption
-
-### Community Building
-
-- Clear contribution guidelines
-- "Good first issue" labels for newcomers
-
-## Technical Decisions
-
-### Language: Python
-
-- Excellent SQL library ecosystem (SQLAlchemy)
-- Strong scheduling libraries (APScheduler, Croniter)
-- Familiar to data analysts
-- Easy deployment via Docker
-- Good cloud function support
-
-### Configuration: YAML
-
-- Human-readable and writable
-- Familiar to analysts (dbt, Ansible)
-- Supports complex structures
-- Easy to version control
-
-### Deployment: Docker-First
-
-- Consistent across environments
-- Easy cloud deployment
-- No dependency conflicts
-- Simple local development
-
-## Risk Mitigation
-
-### Technical Risks
-
-- **Query Performance**: Implement timeouts and resource limits
-- **Alert Storms**: Rate limiting and alert grouping
-- **Credential Management**: Support for secret managers
-- **Database Load**: Query result caching, read replicas
-
-### Business Risks
-
-- **Adoption**: Focus on documentation and ease of use
-- **Competition**: Differentiate through simplicity
-- **Scope Creep**: Stay focused on SQL alerting
-
-## Getting Started Guide
-
-### Prerequisites
-
-- Python 3.11 or higher
-- Access to a SQL database (PostgreSQL, MySQL, BigQuery, etc.)
-- SMTP server for email notifications (optional)
-
-### Installation
-
-#### Option 1: Using pip (recommended)
+### pip (recommended)
 
 ```bash
 pip install sqlsentinel
 ```
 
-#### Option 2: From source
+### Docker
 
 ```bash
-git clone https://github.com/sqlsentinel/sqlsentinel.git
-cd sqlsentinel
-pip install -e .
+docker pull sqlsentinel/sqlsentinel:latest
 ```
 
-### Quick Start (5 minutes)
+### From source
 
-#### 1. Create a configuration file
+```bash
+git clone https://github.com/kyle-gehring/sql-sentinel.git
+cd sql-sentinel
+pip install .
+```
 
-Create `alerts.yaml`:
+## Quick Start (5 minutes)
+
+### 1. Create a config file
+
+Create `alerts.yaml` with your database connection and alert definitions. Each alert is a SQL query that returns a `status` column with `'ALERT'` or `'OK'`:
 
 ```yaml
 database:
-  url: "postgresql://user:pass@localhost/mydb"  # Or use DATABASE_URL env var
+  url: "sqlite:///mydata.db"  # Or postgresql://, mysql://, bigquery://, etc.
 
 alerts:
   - name: "Daily Revenue Check"
@@ -350,103 +77,134 @@ alerts:
         10000 as threshold
       FROM orders
       WHERE order_date = CURRENT_DATE - 1
-    schedule: "0 9 * * *"  # Every day at 9 AM
+    schedule: "0 9 * * *"
     notify:
       - channel: email
         recipients: ["team@company.com"]
 ```
 
-#### 2. Set up email notifications (optional)
-
-Set environment variables:
+### 2. Validate and test
 
 ```bash
-export SMTP_HOST="smtp.gmail.com"
-export SMTP_PORT="587"
-export SMTP_USER="your-email@gmail.com"
-export SMTP_PASSWORD="your-app-password"
-export SMTP_FROM="alerts@company.com"
-```
-
-#### 3. Initialize the state database
-
-```bash
-sqlsentinel init-db --state-db-url sqlite:///state.db
-```
-
-#### 4. Validate your configuration
-
-```bash
-sqlsentinel validate alerts.yaml
-```
-
-#### 5. Run an alert manually (test)
-
-```bash
-sqlsentinel run-alert alerts.yaml "Daily Revenue Check"
-```
-
-#### 6. Run all alerts (dry-run mode)
-
-```bash
-sqlsentinel run-all alerts.yaml --dry-run
-```
-
-#### 7. Start the daemon (production)
-
-```bash
-sqlsentinel daemon alerts.yaml --state-db-url sqlite:///state.db
-```
-
-The daemon will run continuously and execute alerts according to their schedules.
-
-### Essential Commands
-
-```bash
-# Validate configuration
+# Check your config is valid
 sqlsentinel validate alerts.yaml
 
-# Run a single alert
-sqlsentinel run-alert alerts.yaml "Alert Name"
+# Run alerts without sending notifications
+sqlsentinel run alerts.yaml --dry-run
 
-# Run all alerts once
-sqlsentinel run-all alerts.yaml
+# Run a specific alert
+sqlsentinel run alerts.yaml --alert "Daily Revenue Check" --dry-run
+```
 
-# Show alert history
-sqlsentinel history --state-db-url sqlite:///state.db
+### 3. Run in production
 
-# Check system health
-sqlsentinel healthcheck alerts.yaml
-
-# View metrics
-sqlsentinel metrics
-
-# Silence an alert for 1 hour
-sqlsentinel silence alerts.yaml "Alert Name" --duration 3600
-
-# Start the daemon
+```bash
+# Start the daemon — runs alerts on their cron schedules
 sqlsentinel daemon alerts.yaml
 ```
 
-### Docker Deployment
+Or with Docker:
 
 ```bash
-# Pull the image
-docker pull sqlsentinel/sqlsentinel:latest
-
-# Run with configuration file
 docker run -d \
-  -v $(pwd)/alerts.yaml:/config/alerts.yaml \
-  -e DATABASE_URL="postgresql://user:pass@host/db" \
+  -v $(pwd)/alerts.yaml:/app/config/alerts.yaml \
   -e SMTP_HOST="smtp.gmail.com" \
-  -e SMTP_USER="your-email@gmail.com" \
-  -e SMTP_PASSWORD="your-password" \
+  -e SMTP_USER="alerts@company.com" \
+  -e SMTP_PASSWORD="your-app-password" \
   sqlsentinel/sqlsentinel:latest
 ```
 
-### Next Steps
+## Query Contract
 
-- Read the [Alert Configuration Guide](docs/configuration.md) for advanced options
-- Set up [Slack notifications](docs/notifications.md#slack)
-- Configure [multiple databases](docs/databases.md)
-- Review [best practices](docs/best-practices.md)
+All alert queries must return a `status` column. Everything else is optional context:
+
+| Column | Required | Description |
+|--------|----------|-------------|
+| `status` | Yes | `'ALERT'` or `'OK'` |
+| `actual_value` | No | The metric value |
+| `threshold` | No | The threshold that was exceeded |
+| *(any other)* | No | Included in notification context |
+
+## Supported Databases
+
+Via SQLAlchemy: **PostgreSQL**, **MySQL/MariaDB**, **SQLite**, **SQL Server**, **Snowflake**, **BigQuery**, **Redshift**, **DuckDB**
+
+## Notification Channels
+
+- **Email** — SMTP with configurable templates
+- **Slack** — Webhook integration
+- **Webhook** — Generic HTTP POST for any service
+
+## CLI Reference
+
+```bash
+sqlsentinel validate <config>                  # Validate configuration
+sqlsentinel run <config> [--alert NAME] [--dry-run]  # Run alerts
+sqlsentinel daemon <config>                    # Run on schedule
+sqlsentinel history [--state-db URL]           # View execution history
+sqlsentinel status <config> [--state-db URL]   # Show alert states
+sqlsentinel silence <config> --alert NAME      # Silence an alert
+sqlsentinel unsilence <config> --alert NAME    # Unsilence an alert
+sqlsentinel healthcheck <config>               # Check system health
+sqlsentinel metrics                            # Prometheus metrics
+sqlsentinel init <config>                      # Initialize state database
+```
+
+## AI-First Design
+
+SQL Sentinel works naturally with AI coding assistants like [Claude Code](https://claude.ai/code). Instead of writing YAML by hand, describe what you want:
+
+**You:** "I need an alert that checks if yesterday's revenue is below $10,000. Email me at team@company.com every morning at 9 AM."
+
+**Claude Code will:**
+1. Generate the SQL query for your database
+2. Create the YAML configuration
+3. Validate the alert
+4. Test the database connection
+5. Set up the schedule
+
+### Common AI Tasks
+
+- "Create an alert for daily revenue dropping below $10k"
+- "Show me all my configured alerts"
+- "Test the daily_revenue alert without sending notifications"
+- "Silence the inventory_low alert for 2 hours"
+- "What was the last execution result for my data quality alerts?"
+- "Add a Slack notification to my existing revenue alert"
+
+All of these work naturally with Claude Code — no MCP server needed. See [AI Workflows Guide](docs/ai-workflows.md) for more examples.
+
+## Examples
+
+The [`examples/`](examples/) directory contains ready-to-run configurations:
+
+- [`alerts.yaml`](examples/alerts.yaml) — Basic alerts with SQLite (revenue, error rate, data freshness)
+- [`alerts-multi-channel.yaml`](examples/alerts-multi-channel.yaml) — Multi-channel notifications (email + Slack + webhook)
+- [`bigquery-alerts.yaml`](examples/bigquery-alerts.yaml) — BigQuery-specific examples
+- [`sample_data.db`](examples/sample_data.db) — Sample SQLite database for testing
+
+Try it locally:
+
+```bash
+sqlsentinel validate examples/alerts.yaml
+sqlsentinel run examples/alerts.yaml --dry-run
+```
+
+## Documentation
+
+- [AI Workflows Guide](docs/ai-workflows.md) — Using SQL Sentinel with Claude Code
+- [Docker Deployment](docs/deployment/docker-guide.md) — Production Docker setup
+- [Health Checks](docs/api/health-checks.md) — Monitoring SQL Sentinel itself
+- [Prometheus Metrics](docs/api/metrics.md) — Metrics export reference
+- [Multi-Channel Notifications](docs/notifications/multi-channel.md) — Email, Slack, webhook setup
+- [Daemon Usage](docs/guides/daemon-usage.md) — Running as a background service
+- [BigQuery Setup](docs/guides/bigquery-setup.md) — Google BigQuery configuration
+- [FAQ](docs/FAQ.md) — Frequently asked questions
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and PR guidelines.
+
+## License
+
+[MIT](LICENSE)

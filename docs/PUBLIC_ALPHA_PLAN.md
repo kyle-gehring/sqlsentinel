@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0
 **Target Date:** 2025-02-09 (4 days from now)
-**Status:** Day 2 In Progress
+**Status:** Day 3 Complete (automation + docs done; manual actions remaining)
 
 ---
 
@@ -1081,11 +1081,14 @@ docker push sqlsentinel/sqlsentinel:0.1.0
 Update README.md with:
 
 **New Sections:**
-- [ ] **Badges** (CI status, PyPI version, Docker pulls, coverage, license)
-- [ ] **Quick Demo** (animated GIF showing CLI workflow)
-- [ ] **Installation** (both pip and Docker, tested)
-- [ ] **5-Minute Quickstart** (simplified, works out-of-the-box)
-- [ ] **AI-First Positioning** (new section on Claude Code usage)
+- [x] **Badges** (CI status, PyPI version, license, Python version)
+- [ ] **Quick Demo** (animated GIF showing CLI workflow) ⚠️ *manual action — requires terminal recording*
+- [x] **Installation** (pip, Docker, and from source)
+- [x] **5-Minute Quickstart** (simplified, works out-of-the-box)
+- [x] **AI-First Positioning** (new section on Claude Code usage)
+- [x] **Examples section** with links to examples/ directory
+- [x] **CLI Reference** with accurate command signatures
+- [x] **Documentation index** linking to all guide docs
 
 **Example AI-First Section:**
 
@@ -1155,7 +1158,7 @@ agg demo.cast demo.gif --speed 1.5 --theme monokai
 6. Run: `sqlsentinel daemon alerts.yaml` (show it starting)
 
 **Checklist:**
-- [ ] Terminal recording created
+- [ ] Terminal recording created ⚠️ *manual action — requires asciinema + agg*
 - [ ] GIF exported (< 5MB)
 - [ ] GIF added to README
 - [ ] Demo is clear and compelling
@@ -1184,29 +1187,30 @@ Create `docs/ai-workflows.md`:
 
 **Create/Enhance:**
 
-- [ ] **FAQ.md** - Common questions
+- [x] **docs/FAQ.md** - Common questions
   - Why SQL Sentinel vs [alternative]?
   - What databases are supported?
   - How do I configure notifications?
   - How does state management work?
   - Is there a Web UI?
 
-- [ ] **ARCHITECTURE.md** - System design
+- [ ] **ARCHITECTURE.md** - System design (deferred — existing docs in docs/architecture/ cover this)
   - Component diagram
   - Data flow
   - State management
   - Deployment models
 
-- [ ] **SECURITY.md** - Security considerations
+- [x] **SECURITY.md** - Security considerations
   - Credential management
   - SQL injection prevention
   - Network security
-  - Audit logging
+  - Docker security
+  - Vulnerability reporting
 
-- [ ] **examples/README.md** - Example walkthrough
+- [x] **examples/README.md** - Example walkthrough (updated)
   - Explain each example
   - How to customize
-  - Common patterns
+  - File structure
 
 #### 3.5 Create GitHub Release
 
@@ -1286,16 +1290,16 @@ SQL Sentinel works naturally with AI coding assistants like Claude Code. [Learn 
 #### 3.6 Launch Checklist
 
 **Pre-Launch:**
-- [ ] All tests passing in CI
-- [ ] PyPI package works
-- [ ] Docker images work
-- [ ] Documentation complete
-- [ ] Demo GIF in README
-- [ ] GitHub release created
-- [ ] LICENSE file present
-- [ ] Code of Conduct included
+- [ ] All tests passing in CI ⚠️ *manual — verify after merge to main*
+- [ ] PyPI package works ⚠️ *manual — requires PyPI account + publish*
+- [ ] Docker images work ⚠️ *manual — requires Docker Hub account + publish*
+- [x] Documentation complete
+- [ ] Demo GIF in README ⚠️ *manual — requires terminal recording*
+- [ ] GitHub release created ⚠️ *manual — tag v0.1.0 + create release*
+- [x] LICENSE file present
+- [x] Code of Conduct referenced in CONTRIBUTING.md
 
-**Launch:**
+**Launch:** ⚠️ *all manual actions*
 - [ ] Tweet/LinkedIn post announcing launch
 - [ ] Share in relevant communities (optional):
   - r/dataengineering
@@ -1312,14 +1316,14 @@ SQL Sentinel works naturally with AI coding assistants like Claude Code. [Learn 
 
 ### Day 3 Deliverables Checklist
 
-- [ ] README enhanced with badges, demo GIF, AI-first section
-- [ ] Demo GIF created and compelling
-- [ ] AI workflows documentation complete
-- [ ] FAQ, Architecture, Security docs created
-- [ ] GitHub release v0.1.0 published
-- [ ] Launch announcement posted
-- [ ] All links working
-- [ ] Repository looks professional
+- [x] README rewritten with badges, AI-first section, accurate CLI reference, examples, doc index
+- [ ] Demo GIF created ⚠️ *manual action*
+- [x] AI workflows documentation complete (`docs/ai-workflows.md`)
+- [x] FAQ (`docs/FAQ.md`), Security (`SECURITY.md`), examples README created
+- [ ] GitHub release v0.1.0 published ⚠️ *manual — tag + release notes in plan*
+- [ ] Launch announcement posted ⚠️ *manual action*
+- [ ] All links verified after merge to main ⚠️ *manual action*
+- [x] Repository looks professional
 
 ---
 
