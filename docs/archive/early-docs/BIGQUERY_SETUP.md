@@ -12,7 +12,7 @@ Since the devcontainer doesn't have gcloud CLI installed, the easiest approach i
 2. Select your project (or create a new one)
 3. Navigate to **IAM & Admin** > **Service Accounts**
 4. Click **Create Service Account**
-   - Name: `sql-sentinel-testing`
+   - Name: `sqlsentinel-testing`
    - Description: `Service account for SQL Sentinel BigQuery integration tests`
 5. Click **Create and Continue**
 6. Grant these roles:

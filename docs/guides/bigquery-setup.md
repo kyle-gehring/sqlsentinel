@@ -24,7 +24,7 @@ This guide walks you through setting up SQL Sentinel to work with Google BigQuer
 1. Go to **IAM & Admin** > **Service Accounts**
 2. Click **Create Service Account**
 3. Enter details:
-   - **Name**: `sql-sentinel`
+   - **Name**: `sqlsentinel`
    - **Description**: `Service account for SQL Sentinel alerting`
 4. Click **Create and Continue**
 5. Grant roles:
@@ -213,7 +213,7 @@ Your service account needs these IAM roles:
 ```bash
 # Set variables
 PROJECT_ID="my-gcp-project"
-SA_EMAIL="sql-sentinel@my-project.iam.gserviceaccount.com"
+SA_EMAIL="sqlsentinel@my-project.iam.gserviceaccount.com"
 
 # Grant BigQuery Job User
 gcloud projects add-iam-policy-binding $PROJECT_ID \
@@ -428,13 +428,13 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sql-sentinel
+  name: sqlsentinel
 spec:
   replicas: 1
   template:
     spec:
       containers:
-      - name: sql-sentinel
+      - name: sqlsentinel
         image: sqlsentinel/sqlsentinel:latest
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
@@ -451,15 +451,15 @@ spec:
           secretName: bigquery-credentials
       - name: config
         configMap:
-          name: sql-sentinel-config
+          name: sqlsentinel-config
 ```
 
 ### Cloud Run Deployment
 
 ```bash
-gcloud run deploy sql-sentinel \
+gcloud run deploy sqlsentinel \
   --image sqlsentinel/sqlsentinel:latest \
-  --service-account sql-sentinel@my-project.iam.gserviceaccount.com \
+  --service-account sqlsentinel@my-project.iam.gserviceaccount.com \
   --set-env-vars "CONFIG_FILE=gs://my-bucket/alerts.yaml"
 ```
 

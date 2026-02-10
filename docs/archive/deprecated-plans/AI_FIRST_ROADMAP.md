@@ -330,7 +330,7 @@ Claude will:
 ### File Structure After Completion
 
 ```
-sql-sentinel/
+sqlsentinel/
 ├── README.md                          # Enhanced with AI-first messaging
 ├── CONTRIBUTING.md                    # NEW
 ├── CHANGELOG.md                       # NEW

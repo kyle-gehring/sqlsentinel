@@ -456,7 +456,7 @@ notify:
       Authorization: "Bearer ${API_TOKEN}"
       Content-Type: "application/json"
       X-Environment: "production"
-      X-Service: "sql-sentinel"
+      X-Service: "sqlsentinel"
       X-Alert-Priority: "high"
 ```
 

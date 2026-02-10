@@ -29,7 +29,7 @@ This guide covers all authentication methods for connecting SQL Sentinel to Goog
 PROJECT_ID="your-project-id"
 
 # Create service account
-gcloud iam service-accounts create sql-sentinel \
+gcloud iam service-accounts create sqlsentinel \
   --project=$PROJECT_ID \
   --display-name="SQL Sentinel" \
   --description="Service account for SQL Sentinel alerting"
@@ -39,7 +39,7 @@ gcloud iam service-accounts create sql-sentinel \
 
 ```bash
 # Get service account email
-SA_EMAIL="sql-sentinel@${PROJECT_ID}.iam.gserviceaccount.com"
+SA_EMAIL="sqlsentinel@${PROJECT_ID}.iam.gserviceaccount.com"
 
 # Grant BigQuery Job User role (required)
 gcloud projects add-iam-policy-binding $PROJECT_ID \
@@ -56,30 +56,30 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 
 ```bash
 # Create key and download
-gcloud iam service-accounts keys create ~/sql-sentinel-key.json \
+gcloud iam service-accounts keys create ~/sqlsentinel-key.json \
   --iam-account=$SA_EMAIL
 
 # Secure the key file
-chmod 600 ~/sql-sentinel-key.json
+chmod 600 ~/sqlsentinel-key.json
 ```
 
 #### Step 4: Configure SQL Sentinel
 
 **Option A: Environment Variable**
 ```bash
-export GOOGLE_APPLICATION_CREDENTIALS=~/sql-sentinel-key.json
+export GOOGLE_APPLICATION_CREDENTIALS=~/sqlsentinel-key.json
 ```
 
 **Option B: In Connection String**
 ```yaml
 database:
-  url: "bigquery://your-project?credentials=/path/to/sql-sentinel-key.json"
+  url: "bigquery://your-project?credentials=/path/to/sqlsentinel-key.json"
 ```
 
 **Option C: Docker**
 ```bash
 docker run -d \
-  -v /path/to/sql-sentinel-key.json:/keys/sa-key.json:ro \
+  -v /path/to/sqlsentinel-key.json:/keys/sa-key.json:ro \
   -e GOOGLE_APPLICATION_CREDENTIALS=/keys/sa-key.json \
   sqlsentinel/sqlsentinel:latest
 ```
@@ -180,9 +180,9 @@ When running in Google Cloud, ADC automatically uses the service account attache
 
 **Cloud Run:**
 ```bash
-gcloud run deploy sql-sentinel \
+gcloud run deploy sqlsentinel \
   --image sqlsentinel/sqlsentinel:latest \
-  --service-account sql-sentinel@your-project.iam.gserviceaccount.com
+  --service-account sqlsentinel@your-project.iam.gserviceaccount.com
   # Service account credentials automatically available via ADC
 ```
 
@@ -192,7 +192,7 @@ gcloud run deploy sql-sentinel \
 apiVersion: v1
 kind: Pod
 spec:
-  serviceAccountName: sql-sentinel-ksa
+  serviceAccountName: sqlsentinel-ksa
   # Automatically gets credentials via Workload Identity
 ```
 
@@ -210,7 +210,7 @@ spec:
 
 ```bash
 # Create cluster with Workload Identity
-gcloud container clusters create sql-sentinel-cluster \
+gcloud container clusters create sqlsentinel-cluster \
   --workload-pool=$PROJECT_ID.svc.id.goog \
   --region=us-central1
 
@@ -226,7 +226,7 @@ gcloud container clusters update CLUSTER_NAME \
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: sql-sentinel-ksa
+  name: sqlsentinel-ksa
   namespace: default
 ```
 
@@ -237,7 +237,7 @@ kubectl apply -f k8s-service-account.yaml
 #### Step 3: Create GCP Service Account (if not exists)
 
 ```bash
-gcloud iam service-accounts create sql-sentinel \
+gcloud iam service-accounts create sqlsentinel \
   --project=$PROJECT_ID
 ```
 
@@ -245,16 +245,16 @@ gcloud iam service-accounts create sql-sentinel \
 
 ```bash
 gcloud iam service-accounts add-iam-policy-binding \
-  sql-sentinel@$PROJECT_ID.iam.gserviceaccount.com \
+  sqlsentinel@$PROJECT_ID.iam.gserviceaccount.com \
   --role roles/iam.workloadIdentityUser \
-  --member "serviceAccount:$PROJECT_ID.svc.id.goog[default/sql-sentinel-ksa]"
+  --member "serviceAccount:$PROJECT_ID.svc.id.goog[default/sqlsentinel-ksa]"
 ```
 
 #### Step 5: Annotate K8s Service Account
 
 ```bash
-kubectl annotate serviceaccount sql-sentinel-ksa \
-  iam.gke.io/gcp-service-account=sql-sentinel@$PROJECT_ID.iam.gserviceaccount.com
+kubectl annotate serviceaccount sqlsentinel-ksa \
+  iam.gke.io/gcp-service-account=sqlsentinel@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
 #### Step 6: Deploy SQL Sentinel
@@ -264,13 +264,13 @@ kubectl annotate serviceaccount sql-sentinel-ksa \
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sql-sentinel
+  name: sqlsentinel
 spec:
   template:
     spec:
-      serviceAccountName: sql-sentinel-ksa  # Use K8s SA with Workload Identity
+      serviceAccountName: sqlsentinel-ksa  # Use K8s SA with Workload Identity
       containers:
-      - name: sql-sentinel
+      - name: sqlsentinel
         image: sqlsentinel/sqlsentinel:latest
         # No GOOGLE_APPLICATION_CREDENTIALS needed!
         # Workload Identity provides credentials automatically
@@ -400,8 +400,8 @@ CMD ["sqlsentinel", "daemon", "/config/alerts.yaml"]
 
 ```bash
 # Build and run
-docker build -t my-sql-sentinel .
-docker run -d my-sql-sentinel
+docker build -t my-sqlsentinel .
+docker run -d my-sqlsentinel
 ```
 
 ### Kubernetes (Production)
@@ -420,13 +420,13 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sql-sentinel
+  name: sqlsentinel
 spec:
   replicas: 1
   template:
     spec:
       containers:
-      - name: sql-sentinel
+      - name: sqlsentinel
         image: sqlsentinel/sqlsentinel:latest
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
@@ -444,7 +444,7 @@ spec:
 ### CI/CD (GitHub Actions)
 
 ```yaml
-# .github/workflows/sql-sentinel.yml
+# .github/workflows/sqlsentinel.yml
 name: Run BigQuery Alerts
 on:
   schedule:
