@@ -31,9 +31,6 @@ env.bak/
 venv.bak/
 .venv/
 
-# Poetry
-poetry.lock
-
 # Testing
 .pytest_cache/
 .coverage
@@ -47,16 +44,14 @@ htmlcov/
 dmypy.json
 .pytype/
 
-# IDEs
+# IDEs and AI tools
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
 .DS_Store
-
-# Docker
-.dockerignore
 
 # Environment variables
 .env
