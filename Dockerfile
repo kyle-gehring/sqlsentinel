@@ -42,6 +42,7 @@ FROM python:3.11-slim
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -72,9 +73,12 @@ ENV PATH="/app/.venv/bin:$PATH" \
 # Switch to non-root user
 USER sqlsentinel
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -m sqlsentinel.cli healthcheck /app/config/alerts.yaml --state-db sqlite:////app/state/state.db || exit 1
+# Expose health/metrics HTTP port
+EXPOSE 8080
+
+# Health check via HTTP endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
 # Default entrypoint: SQL Sentinel CLI
 ENTRYPOINT ["python", "-m", "sqlsentinel.cli"]

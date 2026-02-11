@@ -690,6 +690,7 @@ def run_daemon(
     reload_config: bool = False,
     log_level: str = "INFO",
     timezone: str = "UTC",
+    port: int | None = None,
 ) -> int:
     """Run SQL Sentinel as a daemon with scheduled alert execution.
 
@@ -700,6 +701,7 @@ def run_daemon(
         reload_config: If True, watch config file for changes and reload
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
         timezone: Timezone for scheduling (default: UTC)
+        port: HTTP port for health/metrics endpoints (default: $PORT or 8080)
 
     Returns:
         Exit code (0 for success, 1 for failure)
@@ -781,6 +783,21 @@ def run_daemon(
             watcher.stop()
         return 1
 
+    # Start HTTP health/metrics server
+    http_port = port if port is not None else int(os.environ.get("PORT", "8080"))
+    http_server = None
+    try:
+        from .server import start_health_server
+
+        http_server = start_health_server(
+            port=http_port,
+            scheduler_service=scheduler,
+            state_engine=create_engine(state_db_url),
+        )
+    except Exception as e:
+        logger.warning(f"Failed to start health server on port {http_port}: {e}")
+        # Continue without HTTP server — daemon still works for local use
+
     # Main loop - wait for shutdown signal
     logger.info("SQL Sentinel daemon running. Press Ctrl+C to stop.")
     try:
@@ -790,6 +807,10 @@ def run_daemon(
         logger.info("Keyboard interrupt received, shutting down...")
 
     # Graceful shutdown
+    if http_server:
+        logger.info("Stopping health server...")
+        http_server.shutdown()
+
     logger.info("Shutting down scheduler...")
     scheduler.stop(wait=True)
 
@@ -961,6 +982,12 @@ def main() -> int:
         default="UTC",
         help="Timezone for scheduling (default: UTC)",
     )
+    daemon_parser.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="HTTP port for health/metrics endpoints (default: $PORT or 8080)",
+    )
 
     args = parser.parse_args()
 
@@ -1003,6 +1030,7 @@ def main() -> int:
             reload_config=args.reload,
             log_level=args.log_level,
             timezone=args.timezone,
+            port=args.port,
         )
 
     return 0
