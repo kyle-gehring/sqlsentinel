@@ -636,11 +636,7 @@ def healthcheck(
                 status_symbol = (
                     "✓"
                     if status == "healthy"
-                    else "⚠"
-                    if status == "degraded"
-                    else "⊘"
-                    if status == "not_configured"
-                    else "✗"
+                    else "⚠" if status == "degraded" else "⊘" if status == "not_configured" else "✗"
                 )
                 print(f"\n{status_symbol} {check_name.replace('_', ' ').title()}")
                 print(f"  Status: {status}")

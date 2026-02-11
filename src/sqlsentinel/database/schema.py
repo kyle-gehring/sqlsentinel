@@ -1,6 +1,5 @@
 """Database schema management for SQL Sentinel internal tables."""
 
-
 from sqlalchemy import (
     Boolean,
     Column,

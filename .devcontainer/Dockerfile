@@ -57,7 +57,7 @@ RUN pip3 install --no-cache-dir --break-system-packages \
   pytest>=7.4 \
   pytest-cov>=4.1 \
   pytest-mock>=3.12 \
-  black>=23.12 \
+  black>=24.10 \
   mypy>=1.7 \
   ruff>=0.1 \
   pre-commit>=3.6 \
