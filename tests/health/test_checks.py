@@ -1,16 +1,16 @@
 """Tests for health check functions."""
 
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
-
 from sqlsentinel.health.checks import (
     HealthCheckError,
-    check_database,
-    check_scheduler,
-    check_notifications,
     aggregate_health_status,
+    check_database,
+    check_notifications,
+    check_scheduler,
 )
 from sqlsentinel.models.notification import NotificationChannel
 
@@ -41,7 +41,7 @@ class TestCheckDatabase:
 
         assert result["status"] == "healthy"
         assert "latency_ms" in result
-        assert isinstance(result["latency_ms"], (int, float))
+        assert isinstance(result["latency_ms"], int | float)
         assert result["latency_ms"] >= 0
         assert result["message"] == "Database connection OK"
         mock_conn.execute.assert_called_once()

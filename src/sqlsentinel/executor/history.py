@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
@@ -22,13 +22,13 @@ class ExecutionRecord:
         status: str,
         query: str,
         triggered_by: str,
-        actual_value: Optional[float] = None,
-        threshold: Optional[float] = None,
-        error_message: Optional[str] = None,
+        actual_value: float | None = None,
+        threshold: float | None = None,
+        error_message: str | None = None,
         notification_sent: bool = False,
-        notification_error: Optional[str] = None,
-        context_data: Optional[dict[str, Any]] = None,
-        record_id: Optional[int] = None,
+        notification_error: str | None = None,
+        context_data: dict[str, Any] | None = None,
+        record_id: int | None = None,
     ):
         """Initialize execution record.
 
@@ -145,7 +145,7 @@ class ExecutionHistory:
 
     def get_executions(
         self,
-        alert_name: Optional[str] = None,
+        alert_name: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[ExecutionRecord]:
@@ -253,7 +253,7 @@ class ExecutionHistory:
         except SQLAlchemyError as e:
             raise ExecutionError(f"Failed to get execution history: {e}") from e
 
-    def get_latest_execution(self, alert_name: str) -> Optional[ExecutionRecord]:
+    def get_latest_execution(self, alert_name: str) -> ExecutionRecord | None:
         """Get the most recent execution for an alert.
 
         Args:
@@ -268,7 +268,7 @@ class ExecutionHistory:
         records = self.get_executions(alert_name=alert_name, limit=1)
         return records[0] if records else None
 
-    def delete_old_executions(self, alert_name: Optional[str] = None, days: int = 30) -> int:
+    def delete_old_executions(self, alert_name: str | None = None, days: int = 30) -> int:
         """Delete execution records older than specified days.
 
         Args:

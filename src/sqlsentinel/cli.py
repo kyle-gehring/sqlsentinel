@@ -14,8 +14,6 @@ from sqlalchemy import create_engine
 
 from .config.loader import ConfigLoader
 from .config.validator import ConfigValidator
-from .logging import configure_logging, configure_from_env
-from .metrics import get_metrics
 from .database.factory import AdapterFactory
 from .database.schema import SchemaManager
 from .executor.alert_executor import AlertExecutor
@@ -23,8 +21,9 @@ from .health.checks import (
     aggregate_health_status,
     check_database,
     check_notifications,
-    check_scheduler,
 )
+from .logging import configure_logging
+from .metrics import get_metrics
 from .models.alert import AlertConfig
 from .notifications.factory import NotificationFactory
 from .scheduler.config_watcher import ConfigWatcher
@@ -583,7 +582,7 @@ def healthcheck(
             database_url = os.environ.get("DATABASE_URL")
 
         # Load configuration
-        config = load_config(config_file)
+        load_config(config_file)
 
         # Initialize components for checking
         state_engine = create_engine(state_db_url)

@@ -2,7 +2,6 @@
 
 import os
 from pathlib import Path
-from typing import Optional
 
 
 def load_test_env() -> None:
@@ -31,7 +30,7 @@ def should_run_real_email_tests() -> bool:
     return os.getenv("ENABLE_REAL_EMAIL_TESTS", "false").lower() == "true"
 
 
-def get_test_email_recipient() -> Optional[str]:
+def get_test_email_recipient() -> str | None:
     """Get the test email recipient address.
 
     Returns:

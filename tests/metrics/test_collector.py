@@ -1,10 +1,9 @@
 """Tests for metrics collection."""
 
-import pytest
 import time
-from unittest.mock import patch, MagicMock
-from prometheus_client import CollectorRegistry, REGISTRY, Counter, Gauge, Histogram
+from unittest.mock import MagicMock, patch
 
+from prometheus_client import REGISTRY, CollectorRegistry
 from sqlsentinel.metrics.collector import (
     MetricsCollector,
     get_metrics,
@@ -370,7 +369,7 @@ class TestMetricsIntegration:
             self.collector.record_alert_execution(f"alert_{i % 10}", "ok", 100.0)
 
         # Simulate 50 notifications
-        for i in range(50):
+        for _ in range(50):
             self.collector.record_notification("email", "success", 200.0)
 
         metrics_text = self.collector.get_metrics_text()

@@ -3,10 +3,9 @@
 import tempfile
 import time
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 
 import pytest
-
 from sqlsentinel.scheduler.config_watcher import ConfigFileHandler, ConfigWatcher
 
 

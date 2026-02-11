@@ -6,12 +6,12 @@ They are only run when ENABLE_REAL_EMAIL_TESTS=true in .env
 
 import pytest
 from sqlalchemy.engine import Engine
-
 from sqlsentinel.database.adapter import DatabaseAdapter
 from sqlsentinel.executor.alert_executor import AlertExecutor
 from sqlsentinel.models.alert import AlertConfig
 from sqlsentinel.models.notification import NotificationChannel, NotificationConfig
 from sqlsentinel.notifications.factory import NotificationFactory
+
 from tests.helpers import (
     assert_execution_result,
     get_alert_state,

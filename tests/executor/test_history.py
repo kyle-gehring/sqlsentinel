@@ -140,7 +140,7 @@ class TestExecutionHistory:
     def test_get_executions_by_alert_name(self, history):
         """Test getting executions filtered by alert name."""
         # Record executions for different alerts
-        for i in range(2):
+        for _i in range(2):
             record = ExecutionRecord(
                 alert_name="alert_1",
                 executed_at=datetime.utcnow(),
@@ -169,7 +169,7 @@ class TestExecutionHistory:
     def test_get_executions_with_limit(self, history):
         """Test getting executions with limit."""
         # Record 5 executions
-        for i in range(5):
+        for _i in range(5):
             record = ExecutionRecord(
                 alert_name="test_alert",
                 executed_at=datetime.utcnow(),
@@ -327,7 +327,7 @@ class TestExecutionHistory:
         history.delete_old_executions(alert_name="alert_1", days=30)
 
         # alert_2 records might still exist (depending on date calculation)
-        records = history.get_executions(alert_name="alert_2")
+        history.get_executions(alert_name="alert_2")
         # Just verify no error occurs
 
     def test_delete_old_executions_invalid_days(self, history):

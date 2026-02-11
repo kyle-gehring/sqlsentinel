@@ -2,7 +2,6 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
 
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
@@ -19,17 +18,17 @@ class AlertState:
     def __init__(
         self,
         alert_name: str,
-        last_executed_at: Optional[datetime] = None,
-        last_alert_at: Optional[datetime] = None,
-        last_ok_at: Optional[datetime] = None,
+        last_executed_at: datetime | None = None,
+        last_alert_at: datetime | None = None,
+        last_ok_at: datetime | None = None,
         consecutive_alerts: int = 0,
         consecutive_oks: int = 0,
-        current_status: Optional[str] = None,
-        silenced_until: Optional[datetime] = None,
+        current_status: str | None = None,
+        silenced_until: datetime | None = None,
         escalation_count: int = 0,
         notification_failures: int = 0,
-        last_notification_channel: Optional[str] = None,
-        updated_at: Optional[datetime] = None,
+        last_notification_channel: str | None = None,
+        updated_at: datetime | None = None,
     ):
         """Initialize alert state.
 
@@ -128,7 +127,7 @@ class StateManager:
         """
         self.engine = engine
 
-    def _parse_datetime(self, value: any) -> Optional[datetime]:
+    def _parse_datetime(self, value: any) -> datetime | None:
         """Parse datetime from database (handles string and datetime types).
 
         Args:
@@ -209,7 +208,7 @@ class StateManager:
         self,
         state: AlertState,
         new_status: str,
-        notification_channel: Optional[str] = None,
+        notification_channel: str | None = None,
     ) -> None:
         """Update alert state based on new execution status.
 

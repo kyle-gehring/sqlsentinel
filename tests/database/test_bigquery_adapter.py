@@ -1,7 +1,7 @@
 """Tests for BigQuery database adapter."""
 
 import datetime
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 

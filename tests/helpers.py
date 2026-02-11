@@ -1,17 +1,15 @@
 """Test helper utilities for integration and unit tests."""
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
-
 from sqlsentinel.executor.history import ExecutionHistory
 from sqlsentinel.executor.state import StateManager
 from sqlsentinel.models.alert import QueryResult
 
 
-def insert_test_orders(engine: Engine, orders: List[Dict[str, Any]]) -> None:
+def insert_test_orders(engine: Engine, orders: list[dict[str, Any]]) -> None:
     """Insert test order data into the orders table.
 
     Args:
@@ -32,7 +30,7 @@ def insert_test_orders(engine: Engine, orders: List[Dict[str, Any]]) -> None:
         conn.commit()
 
 
-def insert_test_metrics(engine: Engine, metrics: List[Dict[str, Any]]) -> None:
+def insert_test_metrics(engine: Engine, metrics: list[dict[str, Any]]) -> None:
     """Insert test metric data into the metrics table.
 
     Args:
@@ -53,7 +51,7 @@ def insert_test_metrics(engine: Engine, metrics: List[Dict[str, Any]]) -> None:
         conn.commit()
 
 
-def get_execution_count(engine: Engine, alert_name: Optional[str] = None) -> int:
+def get_execution_count(engine: Engine, alert_name: str | None = None) -> int:
     """Get the count of executions in history.
 
     Args:
@@ -68,7 +66,7 @@ def get_execution_count(engine: Engine, alert_name: Optional[str] = None) -> int
     return len(records)
 
 
-def get_last_execution(engine: Engine, alert_name: str) -> Optional[Dict[str, Any]]:
+def get_last_execution(engine: Engine, alert_name: str) -> dict[str, Any] | None:
     """Get the most recent execution record for an alert.
 
     Args:
@@ -99,7 +97,7 @@ def get_last_execution(engine: Engine, alert_name: str) -> Optional[Dict[str, An
     }
 
 
-def get_alert_state(engine: Engine, alert_name: str) -> Optional[Dict[str, Any]]:
+def get_alert_state(engine: Engine, alert_name: str) -> dict[str, Any] | None:
     """Get the current state for an alert.
 
     Args:
@@ -162,8 +160,8 @@ def verify_state_updated(
     engine: Engine,
     alert_name: str,
     expected_status: str,
-    expected_consecutive_alerts: Optional[int] = None,
-    expected_consecutive_oks: Optional[int] = None,
+    expected_consecutive_alerts: int | None = None,
+    expected_consecutive_oks: int | None = None,
 ) -> bool:
     """Verify that alert state was updated with expected values.
 
@@ -199,7 +197,7 @@ def create_query_result(
     status: str = "ALERT",
     actual_value: Any = 100,
     threshold: Any = 50,
-    context: Optional[Dict[str, Any]] = None,
+    context: dict[str, Any] | None = None,
 ) -> QueryResult:
     """Create a QueryResult instance for testing.
 

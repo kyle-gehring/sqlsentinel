@@ -1,21 +1,17 @@
 """Pytest configuration and fixtures."""
 
-import os
-import tempfile
-from typing import Generator
+from collections.abc import Generator
 from unittest.mock import MagicMock, Mock
 
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-
 from sqlsentinel.database.adapter import DatabaseAdapter
 from sqlsentinel.database.schema import SchemaManager
-from sqlsentinel.executor.history import ExecutionHistory
-from sqlsentinel.executor.state import StateManager
 from sqlsentinel.models.alert import AlertConfig
 from sqlsentinel.models.notification import NotificationConfig
 from sqlsentinel.notifications.factory import NotificationFactory
+
 from tests.test_config import get_smtp_config, load_test_env
 
 # Load environment variables at test session start
@@ -93,9 +89,10 @@ def temp_query_db() -> Generator[str, None, None]:
     This database simulates the user's data warehouse with sample business data.
     Returns the connection string.
     """
-    from sqlalchemy import text
-    import tempfile
     import os
+    import tempfile
+
+    from sqlalchemy import text
 
     # Create a temporary file for SQLite database to allow sharing across connections
     fd, db_path = tempfile.mkstemp(suffix=".db")
@@ -143,7 +140,7 @@ def temp_query_db() -> Generator[str, None, None]:
     # Cleanup
     try:
         os.unlink(db_path)
-    except:
+    except OSError:
         pass
 
 

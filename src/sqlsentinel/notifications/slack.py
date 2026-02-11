@@ -112,11 +112,6 @@ class SlackNotificationService(NotificationService):
         blocks = []
 
         # Header block
-        header_text = (
-            f":rotating_light: *{alert.name}*"
-            if result.status == "ALERT"
-            else f":white_check_mark: *{alert.name}*"
-        )
         blocks.append(
             {"type": "header", "text": {"type": "plain_text", "text": alert.name, "emoji": True}}
         )

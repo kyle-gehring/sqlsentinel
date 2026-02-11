@@ -3,7 +3,7 @@
 import json
 import time
 import urllib.request
-from typing import Any, Optional
+from typing import Any
 from urllib.error import HTTPError, URLError
 
 from ..models.alert import AlertConfig, QueryResult
@@ -19,7 +19,7 @@ class WebhookNotificationService(NotificationService):
         self,
         url: str,
         method: str = "POST",
-        headers: Optional[dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         max_retries: int = 3,
         retry_delay_seconds: int = 1,
         timeout_seconds: int = 30,

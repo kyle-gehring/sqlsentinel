@@ -5,12 +5,12 @@ import time
 from typing import Any
 
 from prometheus_client import (
+    REGISTRY,
+    CollectorRegistry,
     Counter,
     Gauge,
     Histogram,
     generate_latest,
-    CollectorRegistry,
-    REGISTRY,
 )
 
 logger = logging.getLogger(__name__)

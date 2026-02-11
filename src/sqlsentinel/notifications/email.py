@@ -4,7 +4,6 @@ import smtplib
 import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Optional
 
 from ..models.alert import AlertConfig, QueryResult
 from ..models.errors import NotificationError
@@ -19,10 +18,10 @@ class EmailNotificationService(NotificationService):
         self,
         smtp_host: str,
         smtp_port: int = 587,
-        smtp_username: Optional[str] = None,
-        smtp_password: Optional[str] = None,
+        smtp_username: str | None = None,
+        smtp_password: str | None = None,
         use_tls: bool = True,
-        from_address: Optional[str] = None,
+        from_address: str | None = None,
         max_retries: int = 3,
         retry_delay_seconds: int = 2,
     ):

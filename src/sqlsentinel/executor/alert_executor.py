@@ -2,7 +2,6 @@
 
 import time
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy.engine import Engine
 
@@ -67,10 +66,10 @@ class AlertExecutor:
             ExecutionError: If execution fails
         """
         start_time = time.time()
-        query_result: Optional[QueryResult] = None
-        error_message: Optional[str] = None
+        query_result: QueryResult | None = None
+        error_message: str | None = None
         notification_sent = False
-        notification_error: Optional[str] = None
+        notification_error: str | None = None
 
         try:
             # Step 1: Get current state
@@ -149,7 +148,7 @@ class AlertExecutor:
                 status=metric_status,
                 duration_ms=duration_ms,
             )
-        except Exception as e:
+        except Exception:
             # Don't fail execution if metrics recording fails
             pass
 

@@ -1,12 +1,6 @@
 """Tests for CLI module."""
 
-import argparse
-from io import StringIO
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
-
-import pytest
-from sqlalchemy import create_engine
+from unittest.mock import Mock, patch
 
 from sqlsentinel.cli import (
     AppConfig,
@@ -19,8 +13,8 @@ from sqlsentinel.cli import (
     run_all_alerts,
     show_history,
     show_metrics,
-    silence_alert,
     show_status,
+    silence_alert,
     unsilence_alert,
     validate_config,
 )
@@ -1545,7 +1539,7 @@ class TestHealthcheck:
         mock_check_database.return_value = {"status": "healthy"}
         mock_check_notifications.return_value = {"status": "healthy"}
 
-        exit_code = healthcheck(
+        healthcheck(
             config_file="test.yaml",
             state_db_url="sqlite:///state.db",
             database_url=None,  # Should use env var
@@ -1595,7 +1589,7 @@ class TestHealthcheck:
         )
 
         # Should handle the error gracefully
-        captured = capsys.readouterr()
+        capsys.readouterr()
         assert exit_code == 0  # Degraded
 
     @patch("sqlsentinel.cli.load_config")

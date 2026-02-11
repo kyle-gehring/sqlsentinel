@@ -165,7 +165,7 @@ class TestCreateSchemaFromConnectionString:
 
         # Verify by creating new connection and checking tables
         engine = create_engine(connection_string)
-        inspector = inspect(engine)
+        inspect(engine)
         # Note: in-memory databases are not shared, so we can't verify this way
         # This test mainly ensures no exceptions are raised
 

@@ -1,7 +1,6 @@
 """Notification factory for creating notification services."""
 
 import os
-from typing import Optional
 
 from ..models.errors import NotificationError
 from ..models.notification import NotificationChannel
@@ -16,14 +15,14 @@ class NotificationFactory:
 
     def __init__(
         self,
-        smtp_host: Optional[str] = None,
+        smtp_host: str | None = None,
         smtp_port: int = 587,
-        smtp_username: Optional[str] = None,
-        smtp_password: Optional[str] = None,
+        smtp_username: str | None = None,
+        smtp_password: str | None = None,
         smtp_use_tls: bool = True,
-        smtp_from_address: Optional[str] = None,
-        slack_webhook_url: Optional[str] = None,
-        webhook_url: Optional[str] = None,
+        smtp_from_address: str | None = None,
+        slack_webhook_url: str | None = None,
+        webhook_url: str | None = None,
     ):
         """Initialize notification factory.
 
@@ -52,7 +51,7 @@ class NotificationFactory:
         # Email configuration
         self.smtp_host = smtp_host or os.getenv("SMTP_HOST")
 
-        # Handle smtp_port: use parameter if provided, otherwise check env var, otherwise default to 587
+        # Handle smtp_port: use param if provided, else check env var, else default 587
         if smtp_port is not None and smtp_port != 587:
             self.smtp_port = smtp_port
         else:
@@ -65,7 +64,7 @@ class NotificationFactory:
         # Note: default parameter value is True, so we need to check if it was explicitly set
         env_tls = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
         # If the default wasn't changed, use env var; otherwise use the explicit value
-        # Since we can't tell if True was explicitly set or is default, we'll always prefer env var when present
+        # Can't tell if True was explicitly set or is default; prefer env var when present
         if os.getenv("SMTP_USE_TLS"):
             self.smtp_use_tls = env_tls
         else:
@@ -111,7 +110,8 @@ class NotificationFactory:
         """
         if not self.smtp_host:
             raise NotificationError(
-                "SMTP host not configured. Set smtp_host parameter or SMTP_HOST environment variable."
+                "SMTP host not configured. Set smtp_host parameter "
+                "or SMTP_HOST environment variable."
             )
 
         return EmailNotificationService(
@@ -134,7 +134,8 @@ class NotificationFactory:
         """
         if not self.slack_webhook_url:
             raise NotificationError(
-                "Slack webhook URL not configured. Set slack_webhook_url parameter or SLACK_WEBHOOK_URL environment variable."
+                "Slack webhook URL not configured. Set slack_webhook_url parameter "
+                "or SLACK_WEBHOOK_URL environment variable."
             )
 
         return SlackNotificationService(webhook_url=self.slack_webhook_url)
@@ -150,7 +151,8 @@ class NotificationFactory:
         """
         if not self.webhook_url:
             raise NotificationError(
-                "Webhook URL not configured. Set webhook_url parameter or WEBHOOK_URL environment variable."
+                "Webhook URL not configured. Set webhook_url parameter "
+                "or WEBHOOK_URL environment variable."
             )
 
         return WebhookNotificationService(url=self.webhook_url)

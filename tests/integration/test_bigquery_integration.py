@@ -28,10 +28,6 @@ import pytest
 
 from src.sqlsentinel.database.bigquery_adapter import BigQueryAdapter
 from src.sqlsentinel.database.factory import AdapterFactory
-from src.sqlsentinel.executor.alert_executor import AlertExecutor
-from src.sqlsentinel.executor.query import QueryExecutor
-from src.sqlsentinel.models.alert import AlertConfig, NotificationConfig
-
 
 # Skip all tests in this module if credentials not configured
 pytestmark = pytest.mark.skipif(

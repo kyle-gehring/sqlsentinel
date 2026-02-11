@@ -1,6 +1,5 @@
 """Database adapter factory for SQL Sentinel."""
 
-from typing import Union
 from urllib.parse import parse_qs, urlparse
 
 from .adapter import DatabaseAdapter
@@ -20,7 +19,7 @@ class AdapterFactory:
     """
 
     @staticmethod
-    def create_adapter(connection_string: str) -> Union[DatabaseAdapter, BigQueryAdapter]:
+    def create_adapter(connection_string: str) -> DatabaseAdapter | BigQueryAdapter:
         """
         Create appropriate adapter based on connection string scheme.
 

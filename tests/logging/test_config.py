@@ -3,18 +3,14 @@
 import logging
 import os
 import tempfile
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-import pytest
 
 from sqlsentinel.logging.config import (
     ContextFilter,
+    clear_context,
+    configure_from_env,
     configure_logging,
     get_logger,
     set_context,
-    clear_context,
-    configure_from_env,
 )
 
 
@@ -457,7 +453,7 @@ class TestLoggingIntegration:
 
             # Verify log file has content
             assert os.path.exists(log_file)
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 content = f.read()
                 assert "Test message to file" in content
 
@@ -474,7 +470,7 @@ class TestLoggingIntegration:
 
             # Verify log file contains valid JSON
             assert os.path.exists(log_file)
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 lines = f.readlines()
                 assert len(lines) > 0
                 # Each line should be valid JSON

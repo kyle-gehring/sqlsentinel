@@ -221,7 +221,7 @@ class BigQueryAdapter:
             elif isinstance(value, datetime.date):
                 # Convert date to datetime for consistency
                 converted[key] = datetime.datetime.combine(value, datetime.time.min)
-            elif isinstance(value, (list, tuple)):
+            elif isinstance(value, list | tuple):
                 # Handle ARRAY types (keep as list)
                 converted[key] = list(value)
             elif isinstance(value, dict):
