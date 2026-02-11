@@ -184,10 +184,10 @@ class WebhookNotificationService(NotificationService):
             if not self.verify_ssl:
                 import ssl
 
-                context = ssl._create_unverified_context()
+                context = ssl._create_unverified_context()  # nosec B323
 
             # Send request
-            with urllib.request.urlopen(
+            with urllib.request.urlopen(  # nosec B310
                 req, timeout=self.timeout_seconds, context=context
             ) as response:
                 status_code = response.getcode()

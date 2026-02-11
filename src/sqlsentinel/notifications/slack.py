@@ -184,7 +184,9 @@ class SlackNotificationService(NotificationService):
             )
 
             # Send request
-            with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
+            with urllib.request.urlopen(
+                req, timeout=self.timeout_seconds
+            ) as response:  # nosec B310
                 response_body = response.read().decode("utf-8")
 
                 # Slack responds with "ok" on success

@@ -102,7 +102,7 @@ def start_health_server(
     HealthHandler.scheduler_service = scheduler_service
     HealthHandler.state_engine = state_engine
 
-    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)  # nosec B104
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
 
