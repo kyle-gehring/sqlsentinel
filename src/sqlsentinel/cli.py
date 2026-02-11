@@ -282,7 +282,7 @@ def validate_config(config_file: str) -> int:
 def show_history(
     config_file: str,
     state_db_url: str,
-    alert_name: str = None,
+    alert_name: str | None = None,
     limit: int = 10,
 ) -> int:
     """Show execution history for alerts.
@@ -446,7 +446,7 @@ def unsilence_alert(
 def show_status(
     config_file: str,
     state_db_url: str,
-    alert_name: str = None,
+    alert_name: str | None = None,
 ) -> int:
     """Show current status of alerts.
 
@@ -1002,7 +1002,8 @@ def main() -> int:
 
     # Execute command
     if args.command == "init":
-        return init_database(args.state_db)
+        init_database(args.state_db)
+        return 0
     elif args.command == "run":
         if args.alert:
             return run_alert(args.config, args.alert, args.state_db, args.dry_run)

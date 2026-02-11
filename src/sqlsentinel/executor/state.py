@@ -2,6 +2,7 @@
 
 import logging
 from datetime import datetime, timedelta
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
@@ -127,7 +128,7 @@ class StateManager:
         """
         self.engine = engine
 
-    def _parse_datetime(self, value: any) -> datetime | None:
+    def _parse_datetime(self, value: Any) -> datetime | None:
         """Parse datetime from database (handles string and datetime types).
 
         Args:
@@ -230,6 +231,8 @@ class StateManager:
             )
 
         # Update consecutive counts
+        last_alert_at: datetime | None
+        last_ok_at: datetime | None
         if new_status == "ALERT":
             consecutive_alerts = state.consecutive_alerts + 1
             consecutive_oks = 0

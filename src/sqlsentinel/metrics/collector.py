@@ -2,6 +2,7 @@
 
 import logging
 import time
+from collections.abc import Collection
 from typing import Any
 
 from prometheus_client import (
@@ -170,7 +171,7 @@ class MetricsCollector:
         """
         return {
             "uptime_seconds": time.time() - self.start_time,
-            "scheduler_jobs": self.scheduler_jobs._value.get(),  # type: ignore
+            "scheduler_jobs": self.scheduler_jobs._value.get(),
         }
 
 
@@ -205,7 +206,7 @@ def reset_metrics() -> None:
         for collector in collectors:
             try:
                 # Get collector names
-                names = REGISTRY._collector_to_names.get(collector, set())
+                names: Collection[str] = REGISTRY._collector_to_names.get(collector, set())
                 # Only unregister sqlsentinel metrics
                 if any("sqlsentinel" in str(name) for name in names):
                     REGISTRY.unregister(collector)

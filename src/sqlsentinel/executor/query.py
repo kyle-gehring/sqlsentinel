@@ -1,6 +1,7 @@
 """Query executor for SQL Sentinel."""
 
 from ..database.adapter import DatabaseAdapter
+from ..database.bigquery_adapter import BigQueryAdapter
 from ..models.alert import QueryResult
 from ..models.errors import ExecutionError, ValidationError
 
@@ -8,7 +9,7 @@ from ..models.errors import ExecutionError, ValidationError
 class QueryExecutor:
     """Executes alert queries and validates results."""
 
-    def __init__(self, db_adapter: DatabaseAdapter):
+    def __init__(self, db_adapter: DatabaseAdapter | BigQueryAdapter):
         """Initialize query executor.
 
         Args:

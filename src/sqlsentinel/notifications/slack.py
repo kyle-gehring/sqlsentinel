@@ -135,7 +135,7 @@ class SlackNotificationService(NotificationService):
             fields.append({"type": "mrkdwn", "text": f"*Threshold:*\n{result.threshold}"})
 
         if fields:
-            blocks.append({"type": "section", "fields": fields})
+            blocks.append({"type": "section", "fields": fields})  # type: ignore[dict-item]
 
         # Add context fields if present
         if result.context:

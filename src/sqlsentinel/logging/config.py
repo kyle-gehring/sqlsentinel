@@ -70,8 +70,9 @@ def configure_logging(
         root_logger.removeHandler(handler)
 
     # Create formatter based on format choice
+    formatter: logging.Formatter
     if log_format.lower() == "json":
-        formatter = jsonlogger.JsonFormatter(
+        formatter = jsonlogger.JsonFormatter(  # type: ignore[no-untyped-call]
             fmt="%(timestamp)s %(level)s %(name)s %(message)s",
             timestamp=True,
             datefmt="%Y-%m-%dT%H:%M:%S",

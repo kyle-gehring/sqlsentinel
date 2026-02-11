@@ -67,13 +67,13 @@ class BigQueryAdapter:
                     raise ExecutionError(
                         f"Service account key file not found: {self.credentials_path}"
                     )
-                credentials = service_account.Credentials.from_service_account_file(
+                credentials = service_account.Credentials.from_service_account_file(  # type: ignore[no-untyped-call]
                     self.credentials_path,
                     scopes=["https://www.googleapis.com/auth/bigquery"],
                 )
             else:
                 # Application Default Credentials (ADC)
-                credentials, _ = default(scopes=["https://www.googleapis.com/auth/bigquery"])
+                credentials, _ = default(scopes=["https://www.googleapis.com/auth/bigquery"])  # type: ignore[no-untyped-call]
 
             # Create BigQuery client
             self._client = bigquery.Client(
@@ -100,7 +100,7 @@ class BigQueryAdapter:
     def disconnect(self) -> None:
         """Close BigQuery connection."""
         if self._client:
-            self._client.close()
+            self._client.close()  # type: ignore[no-untyped-call]
             self._client = None
 
     def execute_query(self, query: str, timeout: float = 300.0) -> list[dict[str, Any]]:
@@ -211,7 +211,7 @@ class BigQueryAdapter:
         """
         import datetime
 
-        converted = {}
+        converted: dict[str, Any] = {}
         for key, value in row_dict.items():
             if value is None:
                 converted[key] = None

@@ -6,6 +6,7 @@ from datetime import datetime
 from sqlalchemy.engine import Engine
 
 from ..database.adapter import DatabaseAdapter
+from ..database.bigquery_adapter import BigQueryAdapter
 from ..metrics import get_metrics
 from ..models.alert import AlertConfig, ExecutionResult, QueryResult
 from ..models.errors import ExecutionError, NotificationError
@@ -40,7 +41,7 @@ class AlertExecutor:
     def execute_alert(
         self,
         alert: AlertConfig,
-        db_adapter: DatabaseAdapter,
+        db_adapter: DatabaseAdapter | BigQueryAdapter,
         triggered_by: str = "MANUAL",
         dry_run: bool = False,
     ) -> ExecutionResult:
