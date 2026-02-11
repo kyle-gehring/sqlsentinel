@@ -49,9 +49,7 @@ class TestCheckDatabase:
     def test_check_database_unhealthy_connection_error(self):
         """Test database health check when connection fails."""
         mock_engine = Mock(spec=Engine)
-        mock_engine.connect.side_effect = OperationalError(
-            "Connection failed", None, None
-        )
+        mock_engine.connect.side_effect = OperationalError("Connection failed", None, None)
 
         result = check_database(mock_engine)
 
@@ -143,9 +141,7 @@ class TestCheckScheduler:
         """Test scheduler health check when exception occurs."""
         mock_scheduler_service = Mock()
         mock_scheduler_service.scheduler.running = True
-        mock_scheduler_service.scheduler.get_jobs.side_effect = Exception(
-            "Scheduler error"
-        )
+        mock_scheduler_service.scheduler.get_jobs.side_effect = Exception("Scheduler error")
 
         result = check_scheduler(mock_scheduler_service)
 

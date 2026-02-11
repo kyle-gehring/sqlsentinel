@@ -637,7 +637,11 @@ def healthcheck(
                 status_symbol = (
                     "✓"
                     if status == "healthy"
-                    else "⚠" if status == "degraded" else "⊘" if status == "not_configured" else "✗"
+                    else "⚠"
+                    if status == "degraded"
+                    else "⊘"
+                    if status == "not_configured"
+                    else "✗"
                 )
                 print(f"\n{status_symbol} {check_name.replace('_', ' ').title()}")
                 print(f"  Status: {status}")
@@ -654,9 +658,11 @@ def healthcheck(
                 if "channels" in check_result_dict:
                     print("  Channels:")
                     for channel_name, channel_status in check_result_dict["channels"].items():
-                        chan_status = channel_status.get("status", "unknown") if isinstance(
-                            channel_status, dict
-                        ) else "unknown"
+                        chan_status = (
+                            channel_status.get("status", "unknown")
+                            if isinstance(channel_status, dict)
+                            else "unknown"
+                        )
                         chan_symbol = "✓" if chan_status == "healthy" else "⊘"
                         print(f"    {chan_symbol} {channel_name}: {chan_status}")
 

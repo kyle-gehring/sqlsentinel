@@ -237,7 +237,9 @@ def assert_execution_result(
     Raises:
         AssertionError: If result doesn't match expectations
     """
-    assert result.status == expected_status, f"Expected status {expected_status}, got {result.status}"
+    assert (
+        result.status == expected_status
+    ), f"Expected status {expected_status}, got {result.status}"
 
     if expected_has_query_result:
         assert result.query_result is not None, "Expected query result to be present"

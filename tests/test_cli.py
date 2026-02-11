@@ -50,8 +50,7 @@ class TestAppConfig:
             schedule="* * * * *",
             notify=[
                 NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
+                    channel="email", config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
         )
@@ -146,8 +145,7 @@ class TestRunAlert:
             schedule="* * * * *",
             notify=[
                 NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
+                    channel="email", config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
         )
@@ -208,8 +206,7 @@ class TestRunAlert:
             schedule="* * * * *",
             notify=[
                 NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
+                    channel="email", config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
         )
@@ -249,8 +246,7 @@ class TestRunAlert:
             schedule="* * * * *",
             notify=[
                 NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
+                    channel="email", config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
         )
@@ -302,8 +298,7 @@ class TestRunAlert:
             schedule="* * * * *",
             notify=[
                 NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
+                    channel="email", config=EmailConfig(recipients=["alerts@example.com"])
                 )
             ],
         )
@@ -376,11 +371,10 @@ class TestRunAllAlerts:
                 query="SELECT 'OK' as status",
                 schedule="* * * * *",
                 notify=[
-                NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
-                )
-            ],
+                    NotificationConfig(
+                        channel="email", config=EmailConfig(recipients=["alerts@example.com"])
+                    )
+                ],
                 enabled=True,
             ),
             AlertConfig(
@@ -389,11 +383,10 @@ class TestRunAllAlerts:
                 query="SELECT 'OK' as status",
                 schedule="* * * * *",
                 notify=[
-                NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
-                )
-            ],
+                    NotificationConfig(
+                        channel="email", config=EmailConfig(recipients=["alerts@example.com"])
+                    )
+                ],
                 enabled=True,
             ),
         ]
@@ -447,11 +440,10 @@ class TestRunAllAlerts:
                 query="SELECT 'OK' as status",
                 schedule="* * * * *",
                 notify=[
-                NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
-                )
-            ],
+                    NotificationConfig(
+                        channel="email", config=EmailConfig(recipients=["alerts@example.com"])
+                    )
+                ],
                 enabled=True,
             ),
             AlertConfig(
@@ -460,11 +452,10 @@ class TestRunAllAlerts:
                 query="SELECT 'OK' as status",
                 schedule="* * * * *",
                 notify=[
-                NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
-                )
-            ],
+                    NotificationConfig(
+                        channel="email", config=EmailConfig(recipients=["alerts@example.com"])
+                    )
+                ],
                 enabled=False,
             ),
         ]
@@ -517,11 +508,10 @@ class TestRunAllAlerts:
                 query="SELECT 'OK' as status",
                 schedule="* * * * *",
                 notify=[
-                NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
-                )
-            ],
+                    NotificationConfig(
+                        channel="email", config=EmailConfig(recipients=["alerts@example.com"])
+                    )
+                ],
             ),
             AlertConfig(
                 name="alert2",
@@ -529,11 +519,10 @@ class TestRunAllAlerts:
                 query="SELECT 'OK' as status",
                 schedule="* * * * *",
                 notify=[
-                NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
-                )
-            ],
+                    NotificationConfig(
+                        channel="email", config=EmailConfig(recipients=["alerts@example.com"])
+                    )
+                ],
             ),
         ]
         config = AppConfig(
@@ -591,11 +580,10 @@ class TestRunAllAlerts:
                 query="SELECT 'OK' as status",
                 schedule="* * * * *",
                 notify=[
-                NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
-                )
-            ],
+                    NotificationConfig(
+                        channel="email", config=EmailConfig(recipients=["alerts@example.com"])
+                    )
+                ],
             )
         ]
         config = AppConfig(
@@ -649,11 +637,10 @@ class TestValidateConfig:
                 query="SELECT 'OK' as status",
                 schedule="* * * * *",
                 notify=[
-                NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
-                )
-            ],
+                    NotificationConfig(
+                        channel="email", config=EmailConfig(recipients=["alerts@example.com"])
+                    )
+                ],
                 enabled=True,
             )
         ]
@@ -682,11 +669,10 @@ class TestValidateConfig:
                 query="SELECT 'OK' as status",
                 schedule="* * * * *",
                 notify=[
-                NotificationConfig(
-                    channel="email",
-                    config=EmailConfig(recipients=["alerts@example.com"])
-                )
-            ],
+                    NotificationConfig(
+                        channel="email", config=EmailConfig(recipients=["alerts@example.com"])
+                    )
+                ],
                 enabled=False,
             )
         ]
@@ -761,9 +747,7 @@ class TestShowHistory:
         exit_code = show_history("test.yaml", "sqlite:///state.db", alert_name="test_alert")
 
         assert exit_code == 0
-        mock_history.get_executions.assert_called_once_with(
-            alert_name="test_alert", limit=10
-        )
+        mock_history.get_executions.assert_called_once_with(alert_name="test_alert", limit=10)
 
     @patch("sqlsentinel.cli.create_engine")
     @patch("sqlsentinel.executor.history.ExecutionHistory")
@@ -864,9 +848,7 @@ class TestMain:
         mock_run_all.return_value = 0
         exit_code = main()
         assert exit_code == 0
-        mock_run_all.assert_called_once_with(
-            "test.yaml", "sqlite:///sqlsentinel.db", False
-        )
+        mock_run_all.assert_called_once_with("test.yaml", "sqlite:///sqlsentinel.db", False)
 
     @patch("sys.argv", ["sqlsentinel", "run", "test.yaml", "--alert", "my_alert"])
     @patch("sqlsentinel.cli.run_alert")
@@ -886,9 +868,7 @@ class TestMain:
         mock_run_all.return_value = 0
         exit_code = main()
         assert exit_code == 0
-        mock_run_all.assert_called_once_with(
-            "test.yaml", "sqlite:///sqlsentinel.db", True
-        )
+        mock_run_all.assert_called_once_with("test.yaml", "sqlite:///sqlsentinel.db", True)
 
     @patch("sys.argv", ["sqlsentinel", "history", "test.yaml"])
     @patch("sqlsentinel.cli.show_history")
@@ -897,9 +877,7 @@ class TestMain:
         mock_history.return_value = 0
         exit_code = main()
         assert exit_code == 0
-        mock_history.assert_called_once_with(
-            "test.yaml", "sqlite:///sqlsentinel.db", None, 10
-        )
+        mock_history.assert_called_once_with("test.yaml", "sqlite:///sqlsentinel.db", None, 10)
 
     @patch(
         "sys.argv",
@@ -922,9 +900,7 @@ class TestMain:
         mock_silence.return_value = 0
         exit_code = main()
         assert exit_code == 0
-        mock_silence.assert_called_once_with(
-            "test.yaml", "sqlite:///sqlsentinel.db", "my_alert", 1
-        )
+        mock_silence.assert_called_once_with("test.yaml", "sqlite:///sqlsentinel.db", "my_alert", 1)
 
     @patch(
         "sys.argv",
@@ -936,9 +912,7 @@ class TestMain:
         mock_silence.return_value = 0
         exit_code = main()
         assert exit_code == 0
-        mock_silence.assert_called_once_with(
-            "test.yaml", "sqlite:///sqlsentinel.db", "my_alert", 4
-        )
+        mock_silence.assert_called_once_with("test.yaml", "sqlite:///sqlsentinel.db", "my_alert", 4)
 
     @patch("sys.argv", ["sqlsentinel", "unsilence", "test.yaml", "--alert", "my_alert"])
     @patch("sqlsentinel.cli.unsilence_alert")
@@ -947,9 +921,7 @@ class TestMain:
         mock_unsilence.return_value = 0
         exit_code = main()
         assert exit_code == 0
-        mock_unsilence.assert_called_once_with(
-            "test.yaml", "sqlite:///sqlsentinel.db", "my_alert"
-        )
+        mock_unsilence.assert_called_once_with("test.yaml", "sqlite:///sqlsentinel.db", "my_alert")
 
     @patch("sys.argv", ["sqlsentinel", "status", "test.yaml"])
     @patch("sqlsentinel.cli.show_status")
@@ -958,9 +930,7 @@ class TestMain:
         mock_status.return_value = 0
         exit_code = main()
         assert exit_code == 0
-        mock_status.assert_called_once_with(
-            "test.yaml", "sqlite:///sqlsentinel.db", None
-        )
+        mock_status.assert_called_once_with("test.yaml", "sqlite:///sqlsentinel.db", None)
 
     @patch("sys.argv", ["sqlsentinel", "status", "test.yaml", "--alert", "my_alert"])
     @patch("sqlsentinel.cli.show_status")
@@ -969,9 +939,7 @@ class TestMain:
         mock_status.return_value = 0
         exit_code = main()
         assert exit_code == 0
-        mock_status.assert_called_once_with(
-            "test.yaml", "sqlite:///sqlsentinel.db", "my_alert"
-        )
+        mock_status.assert_called_once_with("test.yaml", "sqlite:///sqlsentinel.db", "my_alert")
 
 
 class TestSilenceAlert:
@@ -1265,9 +1233,7 @@ class TestShowStatus:
     @patch("sqlsentinel.cli.load_config")
     @patch("sqlsentinel.cli.create_engine")
     @patch("sqlsentinel.executor.state.StateManager")
-    def test_show_status_filtered(
-        self, mock_state_class, mock_create_engine, mock_load_config
-    ):
+    def test_show_status_filtered(self, mock_state_class, mock_create_engine, mock_load_config):
         """Test status display filtered by alert name."""
         from datetime import datetime
 
@@ -1358,6 +1324,7 @@ class TestShowStatus:
         captured = capsys.readouterr()
         assert "Error showing status" in captured.out
 
+
 class TestMetrics:
     """Tests for metrics command."""
 
@@ -1379,9 +1346,7 @@ class TestMetrics:
         """Test metrics command with text format."""
         mock_metrics = Mock()
         mock_metrics.get_metrics_text.return_value = (
-            "# HELP test metric\n"
-            "# TYPE test_metric gauge\n"
-            "test_metric{label=\"value\"} 42.0\n"
+            "# HELP test metric\n" "# TYPE test_metric gauge\n" 'test_metric{label="value"} 42.0\n'
         )
         mock_get_metrics.return_value = mock_metrics
 

@@ -141,7 +141,9 @@ class AlertExecutor:
         try:
             metrics = get_metrics()
             # Record alert execution metric
-            metric_status = "error" if error_message else (query_result.status if query_result else "error")
+            metric_status = (
+                "error" if error_message else (query_result.status if query_result else "error")
+            )
             metrics.record_alert_execution(
                 alert_name=alert.name,
                 status=metric_status,

@@ -292,6 +292,7 @@ class TestContextManagement:
 
         # Verify context is set (indirectly by using it)
         from sqlsentinel.logging.config import _context_filter
+
         assert _context_filter.context["alert_name"] == "test_alert"
         assert _context_filter.context["status"] == "ok"
 
@@ -301,6 +302,7 @@ class TestContextManagement:
         set_context(key2="value2")
 
         from sqlsentinel.logging.config import _context_filter
+
         assert _context_filter.context["key1"] == "value1"
         assert _context_filter.context["key2"] == "value2"
 
@@ -310,6 +312,7 @@ class TestContextManagement:
         clear_context()
 
         from sqlsentinel.logging.config import _context_filter
+
         assert len(_context_filter.context) == 0
 
     def test_set_context_with_special_characters(self):
@@ -320,6 +323,7 @@ class TestContextManagement:
         )
 
         from sqlsentinel.logging.config import _context_filter
+
         assert _context_filter.context["alert_name"] == "test-alert_123"
         assert "special chars" in _context_filter.context["message"]
 

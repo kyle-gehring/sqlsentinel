@@ -86,24 +86,22 @@ class TestBigQueryAdapter:
     @patch("src.sqlsentinel.database.bigquery_adapter.service_account")
     @patch("src.sqlsentinel.database.bigquery_adapter.bigquery.Client")
     @patch("os.path.exists")
-    def test_connect_with_service_account(self, mock_exists, mock_client_class, mock_service_account):
+    def test_connect_with_service_account(
+        self, mock_exists, mock_client_class, mock_service_account
+    ):
         """Test connection with service account credentials."""
         # Setup mocks
         mock_exists.return_value = True
 
         mock_credentials = Mock()
-        mock_service_account.Credentials.from_service_account_file.return_value = (
-            mock_credentials
-        )
+        mock_service_account.Credentials.from_service_account_file.return_value = mock_credentials
 
         mock_client = Mock()
         mock_client.list_datasets.return_value = iter([])
         mock_client_class.return_value = mock_client
 
         # Test connection
-        adapter = BigQueryAdapter(
-            project_id="test-project", credentials_path="/path/to/key.json"
-        )
+        adapter = BigQueryAdapter(project_id="test-project", credentials_path="/path/to/key.json")
         adapter.connect()
 
         # Verify service account was loaded

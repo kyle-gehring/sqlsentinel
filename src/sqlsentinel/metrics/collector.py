@@ -4,7 +4,14 @@ import logging
 import time
 from typing import Any
 
-from prometheus_client import Counter, Gauge, Histogram, generate_latest, CollectorRegistry, REGISTRY
+from prometheus_client import (
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+    CollectorRegistry,
+    REGISTRY,
+)
 
 logger = logging.getLogger(__name__)
 

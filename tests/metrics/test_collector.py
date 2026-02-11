@@ -175,9 +175,7 @@ class TestMetricsCollector:
     def test_record_scheduler_job_run_exception_handling(self):
         """Test that exceptions in record_scheduler_job_run are caught."""
         self.collector.scheduler_job_runs_total = MagicMock()
-        self.collector.scheduler_job_runs_total.labels.side_effect = Exception(
-            "Test error"
-        )
+        self.collector.scheduler_job_runs_total.labels.side_effect = Exception("Test error")
 
         # Should not raise exception
         self.collector.record_scheduler_job_run("test_alert")
