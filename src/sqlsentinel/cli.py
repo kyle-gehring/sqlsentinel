@@ -11,6 +11,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 
 from .config.loader import ConfigLoader
 from .config.validator import ConfigValidator
@@ -43,6 +44,21 @@ class AppConfig(BaseModel):
     alerts: list[AlertConfig]
 
 
+def make_state_engine(state_db_url: str) -> Engine:
+    """Create a SQLAlchemy engine for the state DB, with a clear error for bad URLs."""
+    from sqlalchemy.exc import ArgumentError
+
+    try:
+        return create_engine(state_db_url)
+    except ArgumentError:
+        print(
+            f"✗ Invalid --state-db value: '{state_db_url}'\n"
+            "  Expected a SQLAlchemy URL, e.g. sqlite:////tmp/state.db\n"
+            "  Tip: set the STATE_DB_URL environment variable to avoid passing this flag."
+        )
+        sys.exit(1)
+
+
 def load_config(config_file: str) -> AppConfig:
     """Load and validate configuration file.
 
@@ -70,7 +86,7 @@ def init_database(state_db_url: str) -> None:
         state_db_url: Connection string for state/history database
     """
     print(f"Initializing SQL Sentinel schema at: {state_db_url}")
-    engine = create_engine(state_db_url)
+    engine = make_state_engine(state_db_url)
     schema_manager = SchemaManager(engine)
     schema_manager.initialize_schema()
     print("✓ Schema initialized successfully")
@@ -116,7 +132,7 @@ def run_alert(
             print(f"Description: {alert.description}")
 
         # Initialize components
-        engine = create_engine(state_db_url)
+        engine = make_state_engine(state_db_url)
         notification_factory = NotificationFactory()
         executor = AlertExecutor(engine, notification_factory)
 
@@ -194,7 +210,7 @@ def run_all_alerts(
         print(f"Found {len(config.alerts)} alert(s)")
 
         # Initialize components
-        engine = create_engine(state_db_url)
+        engine = make_state_engine(state_db_url)
         notification_factory = NotificationFactory()
         executor = AlertExecutor(engine, notification_factory)
 
@@ -301,7 +317,7 @@ def show_history(
     try:
         from .executor.history import ExecutionHistory
 
-        engine = create_engine(state_db_url)
+        engine = make_state_engine(state_db_url)
         history = ExecutionHistory(engine)
 
         print(f"Execution History (last {limit} records)")
@@ -374,7 +390,7 @@ def silence_alert(
             return 1
 
         # Initialize state manager
-        engine = create_engine(state_db_url)
+        engine = make_state_engine(state_db_url)
         state_manager = StateManager(engine)
 
         # Convert hours to seconds
@@ -431,7 +447,7 @@ def unsilence_alert(
             return 1
 
         # Initialize state manager
-        engine = create_engine(state_db_url)
+        engine = make_state_engine(state_db_url)
         state_manager = StateManager(engine)
 
         # Unsilence the alert
@@ -478,7 +494,7 @@ def show_status(
                 return 1
 
         # Initialize state manager
-        engine = create_engine(state_db_url)
+        engine = make_state_engine(state_db_url)
         state_manager = StateManager(engine)
 
         print("\nAlert Status Report")
@@ -587,7 +603,7 @@ def healthcheck(
         load_config(config_file)
 
         # Initialize components for checking
-        state_engine = create_engine(state_db_url)
+        state_engine = make_state_engine(state_db_url)
         notification_factory = NotificationFactory()
 
         # Perform health checks
@@ -795,7 +811,7 @@ def run_daemon(
         http_server = start_health_server(
             port=http_port,
             scheduler_service=scheduler,
-            state_engine=create_engine(state_db_url),
+            state_engine=make_state_engine(state_db_url),
         )
     except Exception as e:
         logger.warning(f"Failed to start health server on port {http_port}: {e}")
@@ -846,7 +862,7 @@ def main() -> int:
     init_parser.add_argument(
         "--state-db",
         default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
-        help="State database URL (default: sqlite:///sqlsentinel.db)",
+        help="State database SQLAlchemy URL, e.g. sqlite:////tmp/state.db (default: sqlite:///sqlsentinel.db)",
     )
 
     # Run command
@@ -859,7 +875,7 @@ def main() -> int:
     run_parser.add_argument(
         "--state-db",
         default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
-        help="State database URL (default: sqlite:///sqlsentinel.db)",
+        help="State database SQLAlchemy URL, e.g. sqlite:////tmp/state.db (default: sqlite:///sqlsentinel.db)",
     )
     run_parser.add_argument(
         "--dry-run",
@@ -887,7 +903,7 @@ def main() -> int:
     history_parser.add_argument(
         "--state-db",
         default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
-        help="State database URL (default: sqlite:///sqlsentinel.db)",
+        help="State database SQLAlchemy URL, e.g. sqlite:////tmp/state.db (default: sqlite:///sqlsentinel.db)",
     )
 
     # Silence command
@@ -903,7 +919,7 @@ def main() -> int:
     silence_parser.add_argument(
         "--state-db",
         default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
-        help="State database URL (default: sqlite:///sqlsentinel.db)",
+        help="State database SQLAlchemy URL, e.g. sqlite:////tmp/state.db (default: sqlite:///sqlsentinel.db)",
     )
 
     # Unsilence command
@@ -913,7 +929,7 @@ def main() -> int:
     unsilence_parser.add_argument(
         "--state-db",
         default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
-        help="State database URL (default: sqlite:///sqlsentinel.db)",
+        help="State database SQLAlchemy URL, e.g. sqlite:////tmp/state.db (default: sqlite:///sqlsentinel.db)",
     )
 
     # Status command
@@ -926,7 +942,7 @@ def main() -> int:
     status_parser.add_argument(
         "--state-db",
         default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
-        help="State database URL (default: sqlite:///sqlsentinel.db)",
+        help="State database SQLAlchemy URL, e.g. sqlite:////tmp/state.db (default: sqlite:///sqlsentinel.db)",
     )
 
     # Healthcheck command
@@ -935,7 +951,7 @@ def main() -> int:
     healthcheck_parser.add_argument(
         "--state-db",
         default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
-        help="State database URL (default: sqlite:///sqlsentinel.db)",
+        help="State database SQLAlchemy URL, e.g. sqlite:////tmp/state.db (default: sqlite:///sqlsentinel.db)",
     )
     healthcheck_parser.add_argument(
         "--database-url",
@@ -963,7 +979,7 @@ def main() -> int:
     daemon_parser.add_argument(
         "--state-db",
         default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
-        help="State database URL (default: sqlite:///sqlsentinel.db)",
+        help="State database SQLAlchemy URL, e.g. sqlite:////tmp/state.db (default: sqlite:///sqlsentinel.db)",
     )
     daemon_parser.add_argument(
         "--database-url",

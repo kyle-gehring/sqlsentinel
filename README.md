@@ -138,17 +138,20 @@ Via SQLAlchemy: **PostgreSQL**, **MySQL/MariaDB**, **SQLite**, **SQL Server**, *
 ## CLI Reference
 
 ```bash
-sqlsentinel validate <config>                  # Validate configuration
-sqlsentinel run <config> [--alert NAME] [--dry-run]  # Run alerts
-sqlsentinel daemon <config>                    # Run on schedule
-sqlsentinel history [--state-db URL]           # View execution history
-sqlsentinel status <config> [--state-db URL]   # Show alert states
-sqlsentinel silence <config> --alert NAME      # Silence an alert
-sqlsentinel unsilence <config> --alert NAME    # Unsilence an alert
-sqlsentinel healthcheck <config>               # Check system health
-sqlsentinel metrics                            # Prometheus metrics
-sqlsentinel init <config>                      # Initialize state database
+sqlsentinel validate <config>                              # Validate configuration
+sqlsentinel run <config> [--alert NAME] [--dry-run]        # Run alerts
+sqlsentinel daemon <config>                                # Run on schedule
+sqlsentinel history [--state-db URL]                       # View execution history
+sqlsentinel status <config> [--state-db URL]               # Show alert states
+sqlsentinel silence <config> --alert NAME                  # Silence an alert
+sqlsentinel unsilence <config> --alert NAME                # Unsilence an alert
+sqlsentinel healthcheck <config>                           # Check system health
+sqlsentinel metrics                                        # Prometheus metrics
+sqlsentinel init                                           # Initialize state database
 ```
+
+`--state-db` accepts a SQLAlchemy URL. For SQLite, use four slashes for an absolute path:
+`sqlite:////tmp/state.db` or set the `STATE_DB_URL` environment variable to avoid passing it each time.
 
 ## AI-First Design
 

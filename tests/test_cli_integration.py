@@ -143,6 +143,20 @@ class TestRunCommand:
         assert "not found" in result.stdout.lower()
 
 
+class TestStateDatabaseErrors:
+    def test_bare_file_path_gives_helpful_error(self, tmp_path):
+        """Passing a bare file path to --state-db prints a clear, actionable error."""
+        result = run_cli(
+            "run",
+            str(FIXTURE_CONFIG),
+            "--state-db",
+            str(tmp_path / "state.db"),  # missing sqlite:/// scheme
+            "--dry-run",
+        )
+        assert result.returncode != 0
+        assert "sqlite://" in result.stdout
+
+
 class TestStatusCommand:
     def test_status_before_any_runs(self, tmp_path):
         """Status works even when no alerts have run yet."""
