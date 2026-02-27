@@ -223,7 +223,9 @@ def run_all_alerts(
             status_symbol = "✓" if result.status == "success" else "✗"
             print(f"{status_symbol} {alert.name}: {result.status} ({result.duration_ms:.2f}ms)")
 
-            if result.query_result:
+            if result.error:
+                print(f"  Error: {result.error}")
+            elif result.query_result:
                 print(f"  Query Status: {result.query_result.status}")
 
             results.append(result)

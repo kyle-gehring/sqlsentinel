@@ -557,6 +557,54 @@ class TestRunAllAlerts:
     @patch("sqlsentinel.cli.NotificationFactory")
     @patch("sqlsentinel.cli.AlertExecutor")
     @patch("sqlsentinel.cli.AdapterFactory.create_adapter")
+    def test_run_all_alerts_error_message_printed(
+        self,
+        mock_adapter_class,
+        mock_executor_class,
+        mock_factory_class,
+        mock_create_engine,
+        mock_load_config,
+        capsys,
+    ):
+        """Test that error messages are printed inline when an alert fails."""
+        alerts = [
+            AlertConfig(
+                name="failing_alert",
+                description="An alert that errors",
+                query="SELECT 'OK' as status",
+                schedule="* * * * *",
+                notify=[
+                    NotificationConfig(
+                        channel="email", config=EmailConfig(recipients=["alerts@example.com"])
+                    )
+                ],
+            )
+        ]
+        config = AppConfig(database=DatabaseConfig(url="sqlite:///test.db"), alerts=alerts)
+        mock_load_config.return_value = config
+        mock_create_engine.return_value = Mock()
+        mock_adapter_class.return_value = Mock()
+
+        mock_result = Mock()
+        mock_result.status = "error"
+        mock_result.duration_ms = 1.5
+        mock_result.error = "403 Access Denied: bigquery.tables.getData permission missing"
+        mock_result.query_result = None
+        mock_executor = Mock()
+        mock_executor.execute_alert.return_value = mock_result
+        mock_executor_class.return_value = mock_executor
+
+        exit_code = run_all_alerts("test.yaml", "sqlite:///state.db")
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert "403 Access Denied: bigquery.tables.getData permission missing" in captured.out
+
+    @patch("sqlsentinel.cli.load_config")
+    @patch("sqlsentinel.cli.create_engine")
+    @patch("sqlsentinel.cli.NotificationFactory")
+    @patch("sqlsentinel.cli.AlertExecutor")
+    @patch("sqlsentinel.cli.AdapterFactory.create_adapter")
     def test_run_all_alerts_dry_run(
         self,
         mock_adapter_class,
