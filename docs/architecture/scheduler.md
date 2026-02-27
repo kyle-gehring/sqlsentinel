@@ -453,7 +453,7 @@ docker run -d \
   -e SMTP_HOST="smtp.gmail.com" \
   -e SMTP_USERNAME="alerts@company.com" \
   -e SMTP_PASSWORD="secret" \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 **With custom timezone:**
@@ -461,7 +461,7 @@ docker run -d \
 docker run -d \
   -e TIMEZONE="America/Los_Angeles" \
   # ... other options ...
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 **Override to run manual commands:**
@@ -470,13 +470,13 @@ docker run -d \
 docker run --rm \
   -v $(pwd)/alerts.yaml:/app/config/alerts.yaml \
   -e DATABASE_URL="..." \
-  sqlsentinel/sqlsentinel:latest \
+  kgehring/sqlsentinel:latest \
   run /app/config/alerts.yaml
 
 # Validate configuration
 docker run --rm \
   -v $(pwd)/alerts.yaml:/app/config/alerts.yaml \
-  sqlsentinel/sqlsentinel:latest \
+  kgehring/sqlsentinel:latest \
   validate /app/config/alerts.yaml
 ```
 
@@ -593,7 +593,7 @@ USER sqlsentinel
 docker run -d \
   --secret smtp_password \
   -e SMTP_PASSWORD_FILE=/run/secrets/smtp_password \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 ### Configuration File Permissions
@@ -603,7 +603,7 @@ docker run -d \
 ```bash
 docker run -d \
   -v $(pwd)/alerts.yaml:/app/config/alerts.yaml:ro \  # ← :ro = read-only
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 ---

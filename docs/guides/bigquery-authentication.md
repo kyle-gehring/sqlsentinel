@@ -81,7 +81,7 @@ database:
 docker run -d \
   -v /path/to/sqlsentinel-key.json:/keys/sa-key.json:ro \
   -e GOOGLE_APPLICATION_CREDENTIALS=/keys/sa-key.json \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 ### Security Best Practices
@@ -181,7 +181,7 @@ When running in Google Cloud, ADC automatically uses the service account attache
 **Cloud Run:**
 ```bash
 gcloud run deploy sqlsentinel \
-  --image sqlsentinel/sqlsentinel:latest \
+  --image kgehring/sqlsentinel:latest \
   --service-account sqlsentinel@your-project.iam.gserviceaccount.com
   # Service account credentials automatically available via ADC
 ```
@@ -271,7 +271,7 @@ spec:
       serviceAccountName: sqlsentinel-ksa  # Use K8s SA with Workload Identity
       containers:
       - name: sqlsentinel
-        image: sqlsentinel/sqlsentinel:latest
+        image: kgehring/sqlsentinel:latest
         # No GOOGLE_APPLICATION_CREDENTIALS needed!
         # Workload Identity provides credentials automatically
 ```
@@ -383,7 +383,7 @@ sqlsentinel daemon bigquery-alerts.yaml
 ### Docker (Production)
 
 ```dockerfile
-FROM sqlsentinel/sqlsentinel:latest
+FROM kgehring/sqlsentinel:latest
 
 # Copy service account key
 COPY service-account-key.json /secrets/key.json
@@ -427,7 +427,7 @@ spec:
     spec:
       containers:
       - name: sqlsentinel
-        image: sqlsentinel/sqlsentinel:latest
+        image: kgehring/sqlsentinel:latest
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /secrets/key.json

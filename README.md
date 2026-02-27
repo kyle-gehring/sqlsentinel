@@ -46,7 +46,7 @@ pip install sqlsentinel
 ### Docker
 
 ```bash
-docker pull sqlsentinel/sqlsentinel:latest
+docker pull kgehring/sqlsentinel:latest
 ```
 
 ### From source
@@ -111,7 +111,7 @@ docker run -d \
   -e SMTP_HOST="smtp.gmail.com" \
   -e SMTP_USER="alerts@company.com" \
   -e SMTP_PASSWORD="your-app-password" \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 ## Query Contract

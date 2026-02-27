@@ -57,7 +57,7 @@ SQL Sentinel provides production-ready Docker images and deployment templates fo
 ### 1. Pull the Docker Image
 
 ```bash
-docker pull sqlsentinel/sqlsentinel:latest
+docker pull kgehring/sqlsentinel:latest
 ```
 
 ### 2. Create Alert Configuration
@@ -93,7 +93,7 @@ docker run -d \
   -e SMTP_USERNAME="your-email@gmail.com" \
   -e SMTP_PASSWORD="your-app-password" \
   -e SMTP_FROM="alerts@company.com" \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 ### 4. Verify Health
@@ -117,7 +117,7 @@ version: '3.8'
 
 services:
   sqlsentinel:
-    image: sqlsentinel/sqlsentinel:latest
+    image: kgehring/sqlsentinel:latest
     container_name: sqlsentinel
     restart: unless-stopped
 
@@ -229,7 +229,7 @@ services:
       retries: 5
 
   sqlsentinel:
-    image: sqlsentinel/sqlsentinel:latest
+    image: kgehring/sqlsentinel:latest
     container_name: sqlsentinel-test
     depends_on:
       postgres:

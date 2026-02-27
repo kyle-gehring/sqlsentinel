@@ -410,7 +410,7 @@ docker run -d \
   -v $(pwd)/alerts.yaml:/config/alerts.yaml \
   -v $(pwd)/sa-key.json:/keys/sa-key.json \
   -e GOOGLE_APPLICATION_CREDENTIALS=/keys/sa-key.json \
-  sqlsentinel/sqlsentinel:latest \
+  kgehring/sqlsentinel:latest \
   daemon /config/alerts.yaml
 ```
 
@@ -435,7 +435,7 @@ spec:
     spec:
       containers:
       - name: sqlsentinel
-        image: sqlsentinel/sqlsentinel:latest
+        image: kgehring/sqlsentinel:latest
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /secrets/key.json
@@ -458,7 +458,7 @@ spec:
 
 ```bash
 gcloud run deploy sqlsentinel \
-  --image sqlsentinel/sqlsentinel:latest \
+  --image kgehring/sqlsentinel:latest \
   --service-account sqlsentinel@my-project.iam.gserviceaccount.com \
   --set-env-vars "CONFIG_FILE=gs://my-bucket/alerts.yaml"
 ```

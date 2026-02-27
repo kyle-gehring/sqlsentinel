@@ -366,7 +366,7 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=10s \
 ```yaml
 services:
   sqlsentinel:
-    image: sqlsentinel/sqlsentinel:latest
+    image: kgehring/sqlsentinel:latest
     healthcheck:
       test: ["CMD", "sqlsentinel", "healthcheck", "/app/config/alerts.yaml", "--output", "json"]
       interval: 30s
@@ -546,7 +546,7 @@ Always run health checks before deploying configuration changes:
 docker run --rm \
   -v $(pwd)/new-config.yaml:/app/config/alerts.yaml \
   -e DATABASE_URL="..." \
-  sqlsentinel/sqlsentinel:latest \
+  kgehring/sqlsentinel:latest \
   sqlsentinel healthcheck /app/config/alerts.yaml
 ```
 

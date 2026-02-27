@@ -55,10 +55,10 @@ services:
 
 ```bash
 # Production: JSON logs, INFO level
-docker run -e LOG_LEVEL=INFO -e LOG_FORMAT=json sqlsentinel/sqlsentinel:latest
+docker run -e LOG_LEVEL=INFO -e LOG_FORMAT=json kgehring/sqlsentinel:latest
 
 # Development: Text logs, DEBUG level
-docker run -e LOG_LEVEL=DEBUG -e LOG_FORMAT=text sqlsentinel/sqlsentinel:latest
+docker run -e LOG_LEVEL=DEBUG -e LOG_FORMAT=text kgehring/sqlsentinel:latest
 ```
 
 ---

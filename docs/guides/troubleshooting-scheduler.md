@@ -72,7 +72,7 @@ sqlsentinel daemon alerts.yaml \
 # Option C: Docker
 docker run -d \
   -e DATABASE_URL="postgresql://user:pass@host:5432/db" \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 #### 2. Invalid Configuration File
@@ -96,7 +96,7 @@ sqlsentinel validate /path/to/alerts.yaml
 # Docker: Verify mount
 docker run --rm \
   -v $(pwd)/alerts.yaml:/app/config/alerts.yaml \
-  sqlsentinel/sqlsentinel:latest \
+  kgehring/sqlsentinel:latest \
   ls -la /app/config/
 ```
 
@@ -428,7 +428,7 @@ sqlsentinel daemon alerts.yaml --reload
 
 # Docker
 docker run -d \
-  sqlsentinel/sqlsentinel:latest \
+  kgehring/sqlsentinel:latest \
   daemon /app/config/alerts.yaml --reload
 ```
 
@@ -553,7 +553,7 @@ done
 docker run -d \
   --memory=1g \
   --memory-reservation=512m \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 #### 3. Large Execution History
@@ -611,7 +611,7 @@ date
 # Set timezone
 docker run -d \
   -e TIMEZONE="America/Los_Angeles" \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 
 # Or use UTC everywhere (recommended)
 export TIMEZONE="UTC"
@@ -758,7 +758,7 @@ journalctl --vacuum-time=7d
 docker run -d \
   --log-opt max-size=10m \
   --log-opt max-file=3 \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 ---
@@ -792,7 +792,7 @@ chmod 777 state  # Permissive (for testing only)
 docker volume create sqlsentinel-state
 docker run -d \
   -v sqlsentinel-state:/app/state \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 #### 2. Read-Only Filesystem
@@ -909,7 +909,7 @@ When reporting issues, include:
 6. Sanitized configuration file (remove credentials)
 7. Steps to reproduce
 
-**GitHub Issues:** https://github.com/sqlsentinel/sqlsentinel/issues
+**GitHub Issues:** https://github.com/kyle-gehring/sqlsentinel/issues
 
 ---
 
@@ -962,4 +962,4 @@ Consider integrating with:
 
 ---
 
-**Still stuck?** Open an issue with full diagnostics: https://github.com/sqlsentinel/sqlsentinel/issues
+**Still stuck?** Open an issue with full diagnostics: https://github.com/kyle-gehring/sqlsentinel/issues

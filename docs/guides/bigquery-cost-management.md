@@ -476,7 +476,7 @@ alerts:
 
 ## Support
 
-For cost optimization help specific to your use case, please open an issue on [GitHub](https://github.com/sqlsentinel/sqlsentinel/issues) with:
+For cost optimization help specific to your use case, please open an issue on [GitHub](https://github.com/kyle-gehring/sqlsentinel/issues) with:
 - Your query patterns
 - Current costs
 - Optimization goals

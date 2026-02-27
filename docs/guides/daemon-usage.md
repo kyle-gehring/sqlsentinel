@@ -73,7 +73,7 @@ docker run -d \
   -v $(pwd)/alerts.yaml:/app/config/alerts.yaml:ro \
   -v sqlsentinel-state:/app/state \
   --env-file .env \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 
 # 3. View logs
 docker logs -f sqlsentinel
@@ -620,7 +620,7 @@ sqlsentinel daemon alerts.yaml
 ```bash
 docker run -d \
   -e TIMEZONE="Asia/Tokyo" \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 ### Common Timezones
@@ -770,5 +770,5 @@ A: APScheduler will skip the next execution (with `max_instances=1`). Check logs
 
 **Need Help?**
 
-- GitHub Issues: https://github.com/sqlsentinel/sqlsentinel/issues
+- GitHub Issues: https://github.com/kyle-gehring/sqlsentinel/issues
 - Documentation: https://docs.sqlsentinel.io

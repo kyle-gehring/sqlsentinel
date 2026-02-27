@@ -105,7 +105,7 @@ Use the daemon mode with Docker:
 docker run -d \
   -v $(pwd)/alerts.yaml:/app/config/alerts.yaml \
   -e DATABASE_URL="postgresql://..." \
-  sqlsentinel/sqlsentinel:latest
+  kgehring/sqlsentinel:latest
 ```
 
 See [Docker Deployment](deployment/docker-guide.md) and [Production Checklist](deployment/production-checklist.md).
