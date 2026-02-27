@@ -120,3 +120,14 @@ src/sqlsentinel/
 - Config validation via Pydantic v2
 - All database access via SQLAlchemy
 - 80% minimum test coverage enforced
+
+### After Every Code Change
+
+Always run these before committing to avoid CI failures:
+
+```bash
+poetry run black src/ tests/             # Format (auto-fixes)
+poetry run ruff check src/ tests/        # Lint (add --fix for auto-fixes)
+poetry run mypy src/                     # Type check
+poetry run pytest --tb=short -q          # Tests
+```
