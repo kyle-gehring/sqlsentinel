@@ -934,6 +934,29 @@ pandas = ["db-dtypes (>=1.0.4,<2.0.0)", "grpcio (>=1.47.0,<2.0.0)", "grpcio (>=1
 tqdm = ["tqdm (>=4.23.4,<5.0.0)"]
 
 [[package]]
+name = "google-cloud-bigquery-storage"
+version = "2.36.2"
+description = "Google Cloud Bigquery Storage API client library"
+optional = true
+python-versions = ">=3.7"
+files = [
+    {file = "google_cloud_bigquery_storage-2.36.2-py3-none-any.whl", hash = "sha256:823a73db0c4564e8ad3eedcfd5049f3d5aa41775267863b5627211ec36be2dbf"},
+    {file = "google_cloud_bigquery_storage-2.36.2.tar.gz", hash = "sha256:ad49d8c09ad6cd82da4efe596fcfcdbc1458bf05b93915e3c5c00f1e700ae128"},
+]
+
+[package.dependencies]
+google-api-core = {version = ">=1.34.1,<2.0.dev0 || >=2.11.dev0,<3.0.0", extras = ["grpc"]}
+google-auth = ">=2.14.1,<2.24.0 || >2.24.0,<2.25.0 || >2.25.0,<3.0.0"
+grpcio = {version = ">=1.33.2,<2.0.0", markers = "python_version < \"3.14\""}
+proto-plus = {version = ">=1.22.3,<2.0.0", markers = "python_version < \"3.13\""}
+protobuf = ">=3.20.2,<4.21.0 || >4.21.0,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<7.0.0"
+
+[package.extras]
+fastavro = ["fastavro (>=0.21.2)"]
+pandas = ["importlib-metadata (>=1.0.0)", "pandas (>=0.21.1)"]
+pyarrow = ["pyarrow (>=0.15.0)"]
+
+[[package]]
 name = "google-cloud-core"
 version = "2.5.0"
 description = "Google Cloud API client core library"
@@ -3388,8 +3411,8 @@ files = [
 watchmedo = ["PyYAML (>=3.10)"]
 
 [extras]
-all = ["duckdb-engine", "google-auth", "google-cloud-bigquery", "psycopg2-binary", "pymssql", "pymysql", "snowflake-sqlalchemy", "sqlalchemy-bigquery"]
-bigquery = ["google-auth", "google-cloud-bigquery", "sqlalchemy-bigquery"]
+all = ["duckdb-engine", "google-auth", "google-cloud-bigquery", "google-cloud-bigquery-storage", "psycopg2-binary", "pymssql", "pymysql", "snowflake-sqlalchemy", "sqlalchemy-bigquery"]
+bigquery = ["google-auth", "google-cloud-bigquery", "google-cloud-bigquery-storage", "sqlalchemy-bigquery"]
 duckdb = ["duckdb-engine"]
 mssql = ["pymssql"]
 mysql = ["pymysql"]
@@ -3399,4 +3422,4 @@ snowflake = ["snowflake-sqlalchemy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "31c133810deb90ebf817ef11c09d9eb6c61e4a59434bc42a27461a0cd57ff675"
+content-hash = "43472cce1a9ea78d5300189fdfe9ddbe6f0a1706919e9deebd0b814201b437d9"
