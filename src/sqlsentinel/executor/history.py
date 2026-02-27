@@ -1,7 +1,8 @@
 """Execution history tracking for SQL Sentinel."""
 
 import json
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import text
@@ -9,6 +10,17 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..models.errors import ExecutionError
+
+
+def _json_default(obj: Any) -> Any:
+    """Fallback serialiser for types common in database query results."""
+    if isinstance(obj, datetime | date):
+        return obj.isoformat()
+    if isinstance(obj, Decimal):
+        return float(obj)
+    if isinstance(obj, bytes):
+        return obj.decode("utf-8", errors="replace")
+    return str(obj)
 
 
 class ExecutionRecord:
@@ -86,8 +98,12 @@ class ExecutionHistory:
             ExecutionError: If database insert fails
         """
         try:
-            # Serialize context_data to JSON
-            context_json = json.dumps(record.context_data) if record.context_data else None
+            # Serialize context_data to JSON, handling types common in query results
+            context_json = (
+                json.dumps(record.context_data, default=_json_default)
+                if record.context_data
+                else None
+            )
 
             with self.engine.begin() as conn:
                 result = conn.execute(
