@@ -51,8 +51,8 @@ class TestBigQueryAdapter:
         adapter = BigQueryAdapter(project_id="  test-project  ")
         assert adapter.project_id == "test-project"
 
-    @patch("src.sqlsentinel.database.bigquery_adapter.default")
-    @patch("src.sqlsentinel.database.bigquery_adapter.bigquery.Client")
+    @patch("google.auth.default")
+    @patch("google.cloud.bigquery.Client")
     def test_connect_with_adc(self, mock_client_class, mock_default):
         """Test connection with Application Default Credentials."""
         # Setup mocks
@@ -83,8 +83,8 @@ class TestBigQueryAdapter:
 
         assert adapter._client == mock_client
 
-    @patch("src.sqlsentinel.database.bigquery_adapter.service_account")
-    @patch("src.sqlsentinel.database.bigquery_adapter.bigquery.Client")
+    @patch("google.oauth2.service_account")
+    @patch("google.cloud.bigquery.Client")
     @patch("os.path.exists")
     def test_connect_with_service_account(
         self, mock_exists, mock_client_class, mock_service_account
@@ -130,8 +130,8 @@ class TestBigQueryAdapter:
         with pytest.raises(ExecutionError, match="Service account key file not found"):
             adapter.connect()
 
-    @patch("src.sqlsentinel.database.bigquery_adapter.default")
-    @patch("src.sqlsentinel.database.bigquery_adapter.bigquery.Client")
+    @patch("google.auth.default")
+    @patch("google.cloud.bigquery.Client")
     def test_connect_adc_not_configured(self, mock_client_class, mock_default):
         """Test connection fails with helpful message when ADC not configured."""
         # Simulate ADC failure

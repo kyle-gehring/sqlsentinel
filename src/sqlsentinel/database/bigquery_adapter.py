@@ -1,14 +1,12 @@
 """BigQuery database adapter for SQL Sentinel."""
 
 import os
-from typing import Any
-
-from google.auth import default
-from google.cloud import bigquery
-from google.cloud.bigquery import Client, QueryJobConfig
-from google.oauth2 import service_account
+from typing import TYPE_CHECKING, Any
 
 from ..models.errors import ExecutionError
+
+if TYPE_CHECKING:
+    from google.cloud.bigquery import Client
 
 
 class BigQueryAdapter:
@@ -46,7 +44,7 @@ class BigQueryAdapter:
         self.credentials_path = credentials_path
         self.location = location
         self.default_dataset = default_dataset
-        self._client: Client | None = None
+        self._client: "Client | None" = None
 
     def connect(self) -> None:
         """
@@ -59,6 +57,10 @@ class BigQueryAdapter:
             ExecutionError: If connection fails or credentials are invalid
         """
         try:
+            from google.auth import default
+            from google.cloud import bigquery
+            from google.oauth2 import service_account
+
             # Load credentials
             credentials = None
             if self.credentials_path:
@@ -125,6 +127,8 @@ class BigQueryAdapter:
             raise ExecutionError("Query cannot be empty")
 
         try:
+            from google.cloud.bigquery import QueryJobConfig
+
             # Configure query job
             job_config = QueryJobConfig()
             if self.default_dataset:
@@ -174,6 +178,8 @@ class BigQueryAdapter:
             raise ExecutionError("Query cannot be empty")
 
         try:
+            from google.cloud.bigquery import QueryJobConfig
+
             # Configure dry-run job
             job_config = QueryJobConfig(dry_run=True, use_query_cache=False)
             if self.default_dataset:
