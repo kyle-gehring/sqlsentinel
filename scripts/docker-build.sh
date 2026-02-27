@@ -11,7 +11,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-IMAGE_NAME="${IMAGE_NAME:-sqlsentinel/sqlsentinel}"
+IMAGE_NAME="${IMAGE_NAME:-kgehring/sqlsentinel}"
 VERSION="${VERSION:-latest}"
 BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")

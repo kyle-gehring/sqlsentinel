@@ -11,7 +11,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-IMAGE_NAME="${IMAGE_NAME:-sqlsentinel/sqlsentinel}"
+IMAGE_NAME="${IMAGE_NAME:-kgehring/sqlsentinel}"
 VERSION="${VERSION:-latest}"
 CONTAINER_NAME="sqlsentinel-test-$$"
 TEST_CONFIG="/workspace/examples/alerts/revenue_check.yaml"
