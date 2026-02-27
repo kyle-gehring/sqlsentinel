@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sqlsentinel"
-version = "0.1.0"
+version = "0.1.1"
 description = "SQL-first alerting system for data analysts"
 authors = ["SQL Sentinel Contributors"]
 license = "MIT"
