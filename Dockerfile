@@ -33,8 +33,11 @@ RUN poetry install --no-root --only main --all-extras && rm -rf $POETRY_CACHE_DI
 COPY src/ ./src/
 COPY README.md LICENSE ./
 
-# Install the package
-RUN poetry install --only-root
+# Install the package itself (pip avoids poetry --only-root syncing away extras)
+RUN .venv/bin/pip install --no-deps .
+
+# Verify optional extras are present so the build fails fast if they were stripped
+RUN .venv/bin/python -c "import google.auth, psycopg2, pymysql, duckdb, pymssql; print('extras ok')"
 
 # Stage 2: Runtime
 FROM python:3.11-slim
