@@ -30,10 +30,25 @@ pyyaml = "^6.0"
 croniter = "^2.0"
 apscheduler = "^3.10"
 watchdog = "^5.0"
-google-cloud-bigquery = "^3.14"
-google-auth = "^2.36"
 prometheus-client = "^0.19"
 python-json-logger = "^2.0"
+
+# Optional database drivers
+psycopg2-binary = {version = "^2.9", optional = true}
+pymysql = {version = "^1.1", optional = true}
+sqlalchemy-bigquery = {version = "^1.9", optional = true, python = "<3.13"}
+google-cloud-bigquery = {version = "^3.14", optional = true, python = "<3.13"}
+google-auth = {version = "^2.36", optional = true}
+snowflake-sqlalchemy = {version = "^1.5", optional = true}
+duckdb-engine = {version = "^0.13", optional = true}
+
+[tool.poetry.extras]
+postgresql = ["psycopg2-binary"]
+mysql = ["pymysql"]
+bigquery = ["sqlalchemy-bigquery", "google-cloud-bigquery", "google-auth"]
+snowflake = ["snowflake-sqlalchemy"]
+duckdb = ["duckdb-engine"]
+all = ["psycopg2-binary", "pymysql", "sqlalchemy-bigquery", "google-cloud-bigquery", "google-auth", "snowflake-sqlalchemy", "duckdb-engine"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4"
