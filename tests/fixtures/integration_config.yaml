@@ -1,0 +1,15 @@
+database:
+  url: "sqlite:///:memory:"
+
+alerts:
+  - name: "Always OK"
+    description: "Simple alert that always returns OK - used for integration testing"
+    query: "SELECT 'OK' as status"
+    schedule: "0 9 * * *"
+    enabled: true
+
+  - name: "Always Alert"
+    description: "Simple alert that always fires - used for integration testing"
+    query: "SELECT 'ALERT' as status, 0 as actual_value, 100 as threshold"
+    schedule: "0 9 * * *"
+    enabled: true

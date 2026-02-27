@@ -119,3 +119,48 @@ jobs:
     - name: Run Bandit
       run: poetry run bandit -r src/ -ll
       continue-on-error: true
+
+  docker-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64
+        push: false
+        tags: sqlsentinel-ci:latest
+        load: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: CLI starts without import errors
+      run: docker run --rm sqlsentinel-ci:latest sqlsentinel --version
+
+    - name: Validate command works
+      run: |
+        docker run --rm \
+          -v ${{ github.workspace }}/tests/fixtures/integration_config.yaml:/config/alerts.yaml \
+          -e STATE_DB_URL=sqlite:////tmp/state.db \
+          sqlsentinel-ci:latest \
+          sqlsentinel validate /config/alerts.yaml
+
+    - name: Init command creates state DB
+      run: |
+        docker run --rm \
+          -e STATE_DB_URL=sqlite:////tmp/state.db \
+          sqlsentinel-ci:latest \
+          sqlsentinel init
+
+    - name: Run command uses STATE_DB_URL env var
+      run: |
+        docker run --rm \
+          -v ${{ github.workspace }}/tests/fixtures/integration_config.yaml:/config/alerts.yaml \
+          -e STATE_DB_URL=sqlite:////tmp/state.db \
+          sqlsentinel-ci:latest \
+          sh -c "sqlsentinel init && sqlsentinel run /config/alerts.yaml --alert 'Always OK' --dry-run"
