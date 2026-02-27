@@ -845,7 +845,7 @@ def main() -> int:
     init_parser = subparsers.add_parser("init", help="Initialize SQL Sentinel database schema")
     init_parser.add_argument(
         "--state-db",
-        default="sqlite:///sqlsentinel.db",
+        default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
 
@@ -858,7 +858,7 @@ def main() -> int:
     )
     run_parser.add_argument(
         "--state-db",
-        default="sqlite:///sqlsentinel.db",
+        default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
     run_parser.add_argument(
@@ -886,7 +886,7 @@ def main() -> int:
     )
     history_parser.add_argument(
         "--state-db",
-        default="sqlite:///sqlsentinel.db",
+        default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
 
@@ -902,7 +902,7 @@ def main() -> int:
     )
     silence_parser.add_argument(
         "--state-db",
-        default="sqlite:///sqlsentinel.db",
+        default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
 
@@ -912,7 +912,7 @@ def main() -> int:
     unsilence_parser.add_argument("--alert", required=True, help="Alert name to unsilence")
     unsilence_parser.add_argument(
         "--state-db",
-        default="sqlite:///sqlsentinel.db",
+        default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
 
@@ -925,7 +925,7 @@ def main() -> int:
     )
     status_parser.add_argument(
         "--state-db",
-        default="sqlite:///sqlsentinel.db",
+        default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
 
@@ -934,7 +934,7 @@ def main() -> int:
     healthcheck_parser.add_argument("config", help="Path to configuration file")
     healthcheck_parser.add_argument(
         "--state-db",
-        default="sqlite:///sqlsentinel.db",
+        default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
     healthcheck_parser.add_argument(
@@ -962,7 +962,7 @@ def main() -> int:
     daemon_parser.add_argument("config", help="Path to configuration file")
     daemon_parser.add_argument(
         "--state-db",
-        default="sqlite:///sqlsentinel.db",
+        default=os.environ.get("STATE_DB_URL", "sqlite:///sqlsentinel.db"),
         help="State database URL (default: sqlite:///sqlsentinel.db)",
     )
     daemon_parser.add_argument(

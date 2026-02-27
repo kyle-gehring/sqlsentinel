@@ -83,7 +83,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
 # Default entrypoint: SQL Sentinel CLI
 ENTRYPOINT ["python", "-m", "sqlsentinel.cli"]
 # Default command: Run daemon with config reload enabled
-CMD ["daemon", "/app/config/alerts.yaml", "--state-db", "${STATE_DB_URL}", "--reload", "--log-level", "INFO"]
+CMD ["daemon", "/app/config/alerts.yaml", "--reload", "--log-level", "INFO"]
 
 # Labels for metadata
 ARG VERSION=dev
