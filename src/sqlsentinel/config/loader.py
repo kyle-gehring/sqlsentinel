@@ -1,5 +1,6 @@
 """Configuration loader for SQL Sentinel."""
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,8 @@ class ConfigLoader:
 
         try:
             with open(self.config_path, encoding="utf-8") as f:
-                config = yaml.safe_load(f)
+                content = os.path.expandvars(f.read())
+            config = yaml.safe_load(content)
         except yaml.YAMLError as e:
             raise ConfigurationError(f"Failed to parse YAML configuration: {e}") from e
         except Exception as e:
@@ -63,7 +65,7 @@ class ConfigLoader:
             ConfigurationError: If YAML parsing fails
         """
         try:
-            config = yaml.safe_load(yaml_content)
+            config = yaml.safe_load(os.path.expandvars(yaml_content))
         except yaml.YAMLError as e:
             raise ConfigurationError(f"Failed to parse YAML configuration: {e}") from e
 

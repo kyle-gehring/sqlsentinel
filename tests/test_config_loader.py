@@ -1,5 +1,6 @@
 """Tests for ConfigLoader."""
 
+import os
 import tempfile
 from pathlib import Path
 
@@ -118,3 +119,42 @@ alerts:
         loader = ConfigLoader("/dummy/path")
         with pytest.raises(ConfigurationError, match="must be a YAML dictionary"):
             loader.load_from_string(yaml_content)
+
+    def test_env_var_substitution_in_file(self, monkeypatch):
+        """Test that ${VAR} placeholders are expanded from environment variables."""
+        monkeypatch.setenv("TEST_RECIPIENT", "test@example.com")
+        yaml_content = """
+alerts:
+  - name: "Env Var Alert"
+    query: "SELECT 'OK' as status"
+    schedule: "0 * * * *"
+    notify:
+      - channel: email
+        recipients: ["${TEST_RECIPIENT}"]
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            f.write(yaml_content)
+            temp_path = f.name
+
+        try:
+            loader = ConfigLoader(temp_path)
+            config = loader.load()
+            assert config["alerts"][0]["notify"][0]["recipients"] == ["test@example.com"]
+        finally:
+            Path(temp_path).unlink()
+
+    def test_env_var_substitution_in_string(self, monkeypatch):
+        """Test that ${VAR} placeholders are expanded in load_from_string."""
+        monkeypatch.setenv("TEST_WEBHOOK", "https://hooks.slack.com/test")
+        yaml_content = """
+alerts:
+  - name: "Env Var Alert"
+    query: "SELECT 'OK' as status"
+    schedule: "0 * * * *"
+    notify:
+      - channel: slack
+        webhook_url: "${TEST_WEBHOOK}"
+"""
+        loader = ConfigLoader("/dummy/path")
+        config = loader.load_from_string(yaml_content)
+        assert config["alerts"][0]["notify"][0]["webhook_url"] == "https://hooks.slack.com/test"
