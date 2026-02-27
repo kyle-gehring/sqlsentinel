@@ -88,6 +88,6 @@ CMD ["daemon", "/app/config/alerts.yaml", "--state-db", "${STATE_DB_URL}", "--re
 # Labels for metadata
 LABEL org.opencontainers.image.title="SQL Sentinel" \
       org.opencontainers.image.description="SQL-first alerting system for data analysts" \
-      org.opencontainers.image.version="0.1.0" \
+      org.opencontainers.image.version="0.1.1" \
       org.opencontainers.image.vendor="SQL Sentinel Contributors" \
       org.opencontainers.image.licenses="MIT"
