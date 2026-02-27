@@ -45,11 +45,15 @@ class AppConfig(BaseModel):
 
 
 def make_state_engine(state_db_url: str) -> Engine:
-    """Create a SQLAlchemy engine for the state DB, with a clear error for bad URLs."""
+    """Create a SQLAlchemy engine for the state DB, initialising the schema if needed.
+
+    Auto-initialisation is idempotent (CREATE TABLE IF NOT EXISTS), so callers
+    never need to run `init` explicitly before `run`, `status`, etc.
+    """
     from sqlalchemy.exc import ArgumentError
 
     try:
-        return create_engine(state_db_url)
+        engine = create_engine(state_db_url)
     except ArgumentError:
         print(
             f"✗ Invalid --state-db value: '{state_db_url}'\n"
@@ -57,6 +61,8 @@ def make_state_engine(state_db_url: str) -> Engine:
             "  Tip: set the STATE_DB_URL environment variable to avoid passing this flag."
         )
         sys.exit(1)
+    SchemaManager(engine).initialize_schema()
+    return engine
 
 
 def load_config(config_file: str) -> AppConfig:
@@ -86,9 +92,7 @@ def init_database(state_db_url: str) -> None:
         state_db_url: Connection string for state/history database
     """
     print(f"Initializing SQL Sentinel schema at: {state_db_url}")
-    engine = make_state_engine(state_db_url)
-    schema_manager = SchemaManager(engine)
-    schema_manager.initialize_schema()
+    make_state_engine(state_db_url)  # creates engine and initialises schema
     print("✓ Schema initialized successfully")
 
 
