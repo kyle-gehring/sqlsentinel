@@ -103,14 +103,47 @@ sqlsentinel run alerts.yaml --alert "Daily Revenue Check" --dry-run
 sqlsentinel daemon alerts.yaml
 ```
 
+### 4. Configure notifications (required before alerts will send)
+
+Notifications are configured via environment variables. Copy `.env.example` to `.env` and fill in the channels you need:
+
+```bash
+cp .env.example .env
+```
+
+**Email** — all four vars are required or email alerts will be silently skipped:
+
+```bash
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=alerts@company.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM_ADDRESS=alerts@company.com
+```
+
+**Slack** — just the webhook URL:
+
+```bash
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+```
+
+**Webhook** — just the URL:
+
+```bash
+WEBHOOK_URL=https://your-endpoint.com/hook
+```
+
+> **Note:** If the required env vars for a channel are missing, that channel is silently skipped — no error is shown. Always test notifications with `sqlsentinel run alerts.yaml --alert "your-alert"` (without `--dry-run`) after setting env vars to confirm delivery.
+
 Or with Docker:
 
 ```bash
 docker run -d \
   -v $(pwd)/alerts.yaml:/app/config/alerts.yaml \
   -e SMTP_HOST="smtp.gmail.com" \
-  -e SMTP_USER="alerts@company.com" \
+  -e SMTP_USERNAME="alerts@company.com" \
   -e SMTP_PASSWORD="your-app-password" \
+  -e SMTP_FROM_ADDRESS="alerts@company.com" \
   kgehring/sqlsentinel:latest
 ```
 
@@ -131,9 +164,13 @@ Via SQLAlchemy: **PostgreSQL**, **MySQL/MariaDB**, **SQLite**, **SQL Server**, *
 
 ## Notification Channels
 
-- **Email** — SMTP with configurable templates
-- **Slack** — Webhook integration
-- **Webhook** — Generic HTTP POST for any service
+| Channel | Required env vars |
+|---------|-------------------|
+| **Email** | `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_ADDRESS` |
+| **Slack** | `SLACK_WEBHOOK_URL` |
+| **Webhook** | `WEBHOOK_URL` |
+
+If any required var is missing the channel is silently skipped. See [Quick Start step 4](#4-configure-notifications-required-before-alerts-will-send) for setup instructions and `.env.example` for a full template.
 
 ## CLI Reference
 
